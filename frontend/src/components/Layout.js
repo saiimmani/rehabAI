@@ -80,14 +80,14 @@ export const Navbar = () => {
         }}
       />
 
-      <div className="max-w-7xl mx-auto px-5 py-3.5 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-5 py-3 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link
           to="/dashboard"
-          className="text-xl font-black tracking-tight flex items-center gap-2.5 flex-shrink-0"
+          className="text-[22px] font-black tracking-tight flex items-center gap-2.5 flex-shrink-0"
         >
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-base"
             style={{
               background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
               boxShadow: '0 4px 16px rgba(99,102,241,0.4)',
@@ -100,18 +100,18 @@ export const Navbar = () => {
         </Link>
 
         {/* Navigation Links */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-0.5">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.to;
             return (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13.5px] font-semibold transition-all duration-200 ${
                   isActive ? 'nav-item-active' : 'nav-item'
                 }`}
               >
-                <span className="text-base">{link.icon}</span>
+                <span className="text-sm">{link.icon}</span>
                 {link.label}
               </Link>
             );
@@ -126,8 +126,8 @@ export const Navbar = () => {
           >
             <Avatar name={`${user.firstName} ${user.lastName}`} size="sm" />
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-semibold text-white leading-tight">{user.firstName}</p>
-              <p className="text-[10px] text-slate-500 capitalize tracking-wide">{user.role}</p>
+              <p className="text-sm font-bold text-white leading-tight">{user.firstName}</p>
+              <p className="text-[11px] text-slate-400 capitalize tracking-wide">{user.role}</p>
             </div>
             <svg
               className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
@@ -168,10 +168,10 @@ export const Navbar = () => {
                   <Link
                     key={item.to}
                     to={item.to}
-                    className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+                    className="flex items-center gap-3 px-5 py-2.5 text-[13.5px] font-medium text-slate-200 hover:text-white hover:bg-white/7 transition-all"
                     onClick={() => setIsDropdownOpen(false)}
                   >
-                    <span>{item.icon}</span>
+                    <span className="text-base">{item.icon}</span>
                     {item.label}
                   </Link>
                 ))}
@@ -181,9 +181,9 @@ export const Navbar = () => {
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} className="py-2">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
+                  className="w-full flex items-center gap-3 px-5 py-2.5 text-[13.5px] font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
                 >
-                  <span>🚪</span>
+                  <span className="text-base">🚪</span>
                   Sign Out
                 </button>
               </div>
@@ -229,11 +229,11 @@ export const Sidebar = ({ items, activeItem }) => (
 // ─── Page Header ──────────────────────────────────────────────────────────────
 export const PageHeader = ({ title, subtitle, action }) => (
   <div className="mb-8 animate-fade-in-up">
-    <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-2 leading-tight">
+    <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-2.5 leading-tight">
       {title}
     </h1>
     {subtitle && (
-      <p className="text-slate-400 text-base font-medium">{subtitle}</p>
+      <p className="text-slate-300 text-[15px] font-medium leading-relaxed">{subtitle}</p>
     )}
     {action && <div className="mt-4">{action}</div>}
   </div>
@@ -241,22 +241,22 @@ export const PageHeader = ({ title, subtitle, action }) => (
 
 // ─── Tab Bar ──────────────────────────────────────────────────────────────────
 export const TabBar = ({ tabs, activeTab, onChange }) => (
-  <div className="flex gap-1 mb-8 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+  <div className="flex gap-1 mb-8 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}>
     {tabs.map((tab) => (
       <button
         key={tab.id}
         onClick={() => onChange(tab.id)}
-        className={`flex-shrink-0 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
+        className={`flex-shrink-0 px-5 py-2.5 text-[13.5px] font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
           activeTab === tab.id
             ? 'text-white'
-            : 'text-slate-400 hover:text-slate-200'
+            : 'text-slate-300 hover:text-white'
         }`}
         style={
           activeTab === tab.id
             ? {
-                background: 'linear-gradient(135deg, rgba(99,102,241,0.3) 0%, rgba(139,92,246,0.3) 100%)',
-                border: '1px solid rgba(99,102,241,0.4)',
-                boxShadow: '0 4px 12px rgba(99,102,241,0.2)',
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.32) 0%, rgba(139,92,246,0.32) 100%)',
+                border: '1px solid rgba(99,102,241,0.45)',
+                boxShadow: '0 4px 14px rgba(99,102,241,0.22)',
               }
             : {}
         }

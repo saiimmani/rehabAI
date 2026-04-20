@@ -29,15 +29,6 @@ const Login = () => {
     }
   };
 
-  const fillDemo = (type) => {
-    const map = {
-      patient: 'patient@test.com',
-      doctor:  'doctor@test.com',
-      physio:  'physio@test.com',
-    };
-    setFormData({ email: map[type] || '', password: 'password123' });
-    setError('');
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -142,29 +133,7 @@ const Login = () => {
             </Link>
           </p>
 
-          {/* ── Demo credentials ── */}
-          <div className="mt-6 pt-5"
-            style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-3">
-              Demo accounts
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { type: 'patient', label: 'Patient', icon: '🧑‍🦽', color: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.22)', text: '#6ee7b7' },
-                { type: 'doctor',  label: 'Doctor',  icon: '👨‍⚕️', color: 'rgba(99,102,241,0.12)', border: 'rgba(99,102,241,0.22)', text: '#a5b4fc' },
-                { type: 'physio',  label: 'Physio',  icon: '🏥',   color: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.22)', text: '#d8b4fe' },
-              ].map(({ type, label, icon, color, border, text }) => (
-                <button key={type} type="button" onClick={() => fillDemo(type)}
-                  className="py-2.5 rounded-xl text-center cursor-pointer transition-all hover:scale-105"
-                  style={{ background: color, border: `1px solid ${border}` }}>
-                  <span className="block text-lg mb-0.5">{icon}</span>
-                  <span className="block text-[10px] font-bold uppercase tracking-wide" style={{ color }}>
-                    {label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+
         </div>
 
         {/* ── Footer ── */}

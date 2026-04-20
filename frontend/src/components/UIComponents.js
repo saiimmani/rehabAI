@@ -143,12 +143,13 @@ export const StatsGrid = ({ stats }) => (
             {stat.icon}
           </div>
         )}
-        <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-2">
+        {/* Label — bumped from slate-400 for better contrast */}
+        <p className="text-slate-300 text-[11px] font-bold uppercase tracking-widest mb-2">
           {stat.label}
         </p>
         <p className="text-3xl font-black gradient-text">{stat.value}</p>
         {stat.sub && (
-          <p className="text-slate-500 text-xs mt-1">{stat.sub}</p>
+          <p className="text-slate-400 text-xs mt-1 leading-snug">{stat.sub}</p>
         )}
       </div>
     ))}
@@ -192,10 +193,11 @@ export const Avatar = ({ name = '', size = 'md', className = '' }) => {
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
 export const EmptyState = ({ icon, title, description, action }) => (
-  <div className="glass-card p-12 text-center border-dashed" style={{ borderStyle: 'dashed', borderColor: 'rgba(99,102,241,0.2)' }}>
-    <div className="text-6xl mb-5 opacity-70 animate-float inline-block">{icon}</div>
-    <h3 className="text-xl font-bold text-slate-200 mb-2">{title}</h3>
-    <p className="text-slate-400 text-sm mb-6 max-w-sm mx-auto leading-relaxed">{description}</p>
+  <div className="glass-card p-12 text-center" style={{ borderStyle: 'dashed', borderColor: 'rgba(99,102,241,0.22)' }}>
+    <div className="text-6xl mb-5 opacity-75 animate-float inline-block">{icon}</div>
+    {/* Bright title + readable description */}
+    <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+    <p className="text-slate-300 text-sm mb-6 max-w-sm mx-auto leading-relaxed">{description}</p>
     {action}
   </div>
 );
@@ -205,9 +207,9 @@ export const Skeleton = ({ count = 1 }) => (
   <div className="space-y-4">
     {Array.from({ length: count }).map((_, idx) => (
       <div key={idx} className="glass-card p-6 animate-pulse">
-        <div className="h-4 bg-white/8 rounded-lg w-3/4 mb-3" />
-        <div className="h-3 bg-white/5 rounded-lg w-1/2 mb-2" />
-        <div className="h-3 bg-white/5 rounded-lg w-2/3" />
+        <div className="h-4 rounded-lg w-3/4 mb-3" style={{ background: 'rgba(255,255,255,0.10)' }} />
+        <div className="h-3 rounded-lg w-1/2 mb-2" style={{ background: 'rgba(255,255,255,0.07)' }} />
+        <div className="h-3 rounded-lg w-2/3" style={{ background: 'rgba(255,255,255,0.07)' }} />
       </div>
     ))}
   </div>
@@ -228,12 +230,13 @@ export const Alert = ({ title, message, variant = 'info', onClose }) => {
       <div className="flex items-start gap-3">
         <span className="text-lg flex-shrink-0">{v.icon}</span>
         <div>
-          {title && <h4 className="font-bold mb-0.5">{title}</h4>}
-          <p className="text-sm opacity-90">{message}</p>
+          {title && <h4 className="font-bold mb-0.5 text-[15px]">{title}</h4>}
+          {/* Slightly higher opacity for easier reading */}
+          <p className="text-[13.5px] leading-relaxed opacity-95">{message}</p>
         </div>
       </div>
       {onClose && (
-        <button onClick={onClose} className="opacity-60 hover:opacity-100 text-xl font-bold leading-none flex-shrink-0">
+        <button onClick={onClose} className="opacity-70 hover:opacity-100 text-xl font-bold leading-none flex-shrink-0">
           ×
         </button>
       )}
@@ -293,13 +296,13 @@ export const RequestCard = ({
 }) => (
   <Card className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
     <div className="flex-1">
-      <h3 className="text-lg font-bold text-white mb-1">{userName}</h3>
-      <p className="text-slate-400 text-sm mb-2">
+      <h3 className="text-[17px] font-bold text-white mb-1">{userName}</h3>
+      <p className="text-slate-300 text-sm mb-2">
         {userEmail}
         {userPhone && ` • ${userPhone}`}
       </p>
       {specialization && <Badge variant="blue">{specialization}</Badge>}
-      {message && <p className="text-slate-300 mt-3 text-sm leading-relaxed">{message}</p>}
+      {message && <p className="text-slate-200 mt-3 text-sm leading-relaxed">{message}</p>}
     </div>
     {variant === 'incoming' && (
       <div className="flex gap-2 flex-shrink-0">
