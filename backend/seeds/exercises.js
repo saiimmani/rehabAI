@@ -103,7 +103,8 @@ async function seedExercises() {
     if (require.main === module) {
       if (mongoose.connection.readyState === 0) {
         // Simple fallback connection for standalone script
-        const rawURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/rehab-ai';
+        let rawURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/rehab-ai';
+        rawURI = rawURI.replace('mongodb://localhost', 'mongodb://127.0.0.1');
         const dbName = rawURI.split('/').pop().split('?')[0];
         const mongoURI = dbName ? rawURI : rawURI.replace(/\/$/, '') + '/rehab-ai';
         

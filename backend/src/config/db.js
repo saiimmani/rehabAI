@@ -7,7 +7,11 @@ const mongoose = require('mongoose');
  *  • Strips trailing slash before appending the db name
  */
 const normalizeURI = (uri = '') => {
-  const trimmed = uri.trim();
+  let trimmed = uri.trim();
+  
+  // Node.js 17+ resolves localhost to IPv6 (::1) by default, but MongoDB often listens on IPv4.
+  // We automatically replace localhost with 127.0.0.1 to prevent ECONNREFUSED network errors.
+  trimmed = trimmed.replace('mongodb://localhost', 'mongodb://127.0.0.1');
 
   // Make sure the protocol is one of the two supported ones
   if (!trimmed.startsWith('mongodb://') && !trimmed.startsWith('mongodb+srv://')) {
