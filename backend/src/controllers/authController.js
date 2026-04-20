@@ -21,6 +21,13 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
+    if (phone) {
+      const digitCount = phone.replace(/\D/g, '').length;
+      if (digitCount !== 10) {
+        return res.status(400).json({ message: 'Phone number must be exactly 10 digits' });
+      }
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {

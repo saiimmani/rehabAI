@@ -22,6 +22,14 @@ const Register = () => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       setError('First and last name are required'); return false;
     }
+    
+    if (formData.phone) {
+      // Validate that it contains exactly 10 digits (ignoring spaces/dashes)
+      const digitCount = formData.phone.replace(/\D/g, '').length;
+      if (digitCount !== 10) {
+        setError('Phone number must be exactly 10 digits'); return false;
+      }
+    }
     return true;
   };
 

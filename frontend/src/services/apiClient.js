@@ -12,6 +12,15 @@ const apiClient = axios.create({
 // Add token to requests if it exists
 apiClient.interceptors.request.use(
   (config) => {
+    // 🛑 Prevent "Unsupported protocol mongodb" from crashing the browser network stack
+    if (config.baseURL && config.baseURL.startsWith('mongodb')) {
+      return Promise.reject(new Error(
+        'CONFIGURATION ERROR: Your frontend is trying to connect to a MongoDB database directly! ' +
+        'Please check your frontend/.env file and ensure REACT_APP_API_URL is set to http://localhost:5000/api ' +
+        '(You must restart your React server for .env changes to take effect)'
+      ));
+    }
+
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
