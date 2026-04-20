@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Navbar, PageHeader } from '../components/Layout';
-import { Card, Button, Input } from '../components/UIComponents';
+import { Card, Button } from '../components/UIComponents';
 import apiClient from '../services/apiClient';
 
 const AIChatAssistant = () => {

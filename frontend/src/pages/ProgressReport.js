@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { patientsAPI } from '../services/api';
 import { Navbar } from '../components/Layout';
 
 export default function ProgressReport() {
-  const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState([]);
+  const [error, setError] = useState('');
   const [stats, setStats] = useState({
     totalExercises: 0,
     completedExercises: 0,

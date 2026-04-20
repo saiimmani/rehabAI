@@ -6,7 +6,7 @@ import { Navbar, PageHeader } from '../components/Layout';
 
 export default function PhysiotherapistDashboard() {
   const navigate = useNavigate();
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,10 +25,6 @@ export default function PhysiotherapistDashboard() {
     fetchPatients();
   }, []);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   if (loading) {
     return (

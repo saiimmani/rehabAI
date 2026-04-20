@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navbar, PageHeader } from '../components/Layout';
-import { Card, Button, Skeleton } from '../components/UIComponents';
+import { Card, Button } from '../components/UIComponents';
 import apiClient from '../services/apiClient';
 
 const AIRehabPlan = () => {

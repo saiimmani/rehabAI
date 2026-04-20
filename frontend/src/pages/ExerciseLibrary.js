@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import { Navbar, PageHeader, TabBar } from '../components/Layout';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Navbar, PageHeader } from '../components/Layout';
 import { Card, Button, Badge, Input, Skeleton, EmptyState } from '../components/UIComponents';
 import apiClient from '../services/apiClient';
 
 const ExerciseLibrary = () => {
-  const { user } = useContext(AuthContext);
   const [exercises, setExercises] = useState([]);
   const [filteredExercises, setFilteredExercises] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,18 +35,31 @@ const ExerciseLibrary = () => {
     hard: 'red'
   };
 
-  useEffect(() => {
-    fetchExercises();
-  }, []);
+  const filterExercises = useCallback(() => {
+    let filtered = exercises;
+    if (searchQuery) {
+      filtered = filtered.filter(ex =>
+        ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ex.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(ex => {
+        const bodyParts = ex.bodyParts || [];
+        return bodyParts.some(part => part.toLowerCase().includes(selectedCategory));
+      });
+    }
+    setFilteredExercises(filtered);
+  }, [exercises, searchQuery, selectedCategory]);
 
   useEffect(() => {
     filterExercises();
-  }, [exercises, searchQuery, selectedCategory]);
+  }, [filterExercises]);
 
   const fetchExercises = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/exercises');
+      const response = await apiClient.get('/exercises');
       setExercises(response.data.exercises || []);
       setStats(response.data.stats || { total: 0, completed: 0, thisWeek: 0 });
     } catch (error) {
@@ -59,27 +70,10 @@ const ExerciseLibrary = () => {
     }
   };
 
-  const filterExercises = () => {
-    let filtered = exercises;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchExercises(); }, []);
 
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter(ex =>
-        ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ex.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
 
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(ex => {
-        const bodyParts = ex.bodyParts || [];
-        return bodyParts.some(part => part.toLowerCase().includes(selectedCategory));
-      });
-    }
-
-    setFilteredExercises(filtered);
-  };
 
   const handleStartExercise = (exerciseId) => {
     // Navigate to exercise detail/start page

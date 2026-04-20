@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { AuthContext } from './AuthContext';
 
@@ -9,55 +9,64 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
+  const socketRef = useRef(null);
 
   useEffect(() => {
     if (user && token) {
-      const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
-      
+      const SOCKET_URL =
+        process.env.REACT_APP_SOCKET_URL ||
+        process.env.REACT_APP_API_URL?.replace('/api', '') ||
+        'http://localhost:5000';
+
       const newSocket = io(SOCKET_URL, {
         auth: { token },
         transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionAttempts: 10
+        reconnectionDelay: 2000,
+        reconnectionAttempts: 5,
+        timeout: 10000,
       });
 
       newSocket.on('connect', () => {
-        console.log('Socket connected:', newSocket.id);
+        console.log('✅ Socket connected:', newSocket.id);
       });
 
       newSocket.on('connect_error', (err) => {
-        console.error('Socket connection error:', err.message);
+        // Log but don't crash — real-time features are non-critical
+        console.warn('⚠️ Socket connection error:', err.message);
       });
 
       newSocket.on('user_online', ({ onlineUsers: users }) => {
-        setOnlineUsers(users);
+        setOnlineUsers(users || []);
       });
 
       newSocket.on('user_offline', ({ onlineUsers: users }) => {
-        setOnlineUsers(users);
+        setOnlineUsers(users || []);
       });
 
       newSocket.on('user_typing', ({ userId }) => {
-        setTypingUsers(prev => {
+        setTypingUsers((prev) => {
           if (!prev.includes(userId)) return [...prev, userId];
           return prev;
         });
       });
 
       newSocket.on('user_stop_typing', ({ userId }) => {
-        setTypingUsers(prev => prev.filter(id => id !== userId));
+        setTypingUsers((prev) => prev.filter((id) => id !== userId));
       });
 
+      socketRef.current = newSocket;
       setSocket(newSocket);
 
       return () => {
         newSocket.disconnect();
+        socketRef.current = null;
         setSocket(null);
       };
     } else {
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
         setSocket(null);
       }
     }
@@ -65,32 +74,34 @@ export const SocketProvider = ({ children }) => {
   }, [user, token]);
 
   const sendMessage = useCallback((receiverId, message) => {
-    if (socket) {
-      socket.emit('send_message', { receiverId, message });
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('send_message', { receiverId, message });
     }
-  }, [socket]);
+  }, []);
 
   const emitTyping = useCallback((receiverId) => {
-    if (socket) {
-      socket.emit('typing', { receiverId });
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('typing', { receiverId });
     }
-  }, [socket]);
+  }, []);
 
   const emitStopTyping = useCallback((receiverId) => {
-    if (socket) {
-      socket.emit('stop_typing', { receiverId });
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('stop_typing', { receiverId });
     }
-  }, [socket]);
+  }, []);
 
   return (
-    <SocketContext.Provider value={{
-      socket,
-      onlineUsers,
-      typingUsers,
-      sendMessage,
-      emitTyping,
-      emitStopTyping
-    }}>
+    <SocketContext.Provider
+      value={{
+        socket,
+        onlineUsers,
+        typingUsers,
+        sendMessage,
+        emitTyping,
+        emitStopTyping,
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );

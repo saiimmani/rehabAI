@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { Navbar, PageHeader, TabBar } from '../components/Layout';
-import { Card, Button, Badge, Input, Skeleton, Avatar } from '../components/UIComponents';
+import { Navbar, TabBar } from '../components/Layout';
+import { Card, Button, Badge, Skeleton } from '../components/UIComponents';
 import apiClient from '../services/apiClient';
 
 const Profile = () => {

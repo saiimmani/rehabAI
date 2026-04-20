@@ -1,0 +1,26 @@
+# render.yaml — Deploy RehabAI backend to Render.com (free tier)
+# Docs: https://render.com/docs/yaml-spec
+
+services:
+  - type: web
+    name: rehabai-backend
+    env: node
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false          # Set this in Render dashboard — never commit real URI
+      - key: JWT_SECRET
+        sync: false          # Set this in Render dashboard
+      - key: JWT_EXPIRE
+        value: 7d
+      - key: ALLOWED_ORIGINS
+        value: https://saiimmani.github.io,http://localhost:3000

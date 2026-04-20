@@ -1,13 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import React, { useState, useEffect } from 'react';
 import { patientsAPI } from '../services/api';
 import CameraTracker from '../components/CameraTracker';
 import { Navbar } from '../components/Layout';
 
 export default function ExerciseTracking() {
-  const navigate = useNavigate();
-  const { user, logout } = useContext(AuthContext);
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -118,10 +114,6 @@ export default function ExerciseTracking() {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   if (loading) {
     return (

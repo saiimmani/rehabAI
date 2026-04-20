@@ -23,7 +23,32 @@ const server = http.createServer(app);
 const path = require('path');
 
 // Middleware
-app.use(cors());
+// CORS — allow configured origins (set ALLOWED_ORIGINS env var in production)
+const getAllowedOrigins = () => {
+  if (process.env.ALLOWED_ORIGINS) {
+    return process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
+  }
+  return [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://saiimmani.github.io'
+  ];
+};
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (curl, mobile apps, etc.)
+    if (!origin) return callback(null, true);
+    const allowed = getAllowedOrigins();
+    if (allowed.includes(origin) || allowed.includes('*')) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS: origin ${origin} not allowed`), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -31,10 +56,11 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Socket.IO setup with CORS
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? '*' : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: getAllowedOrigins(),
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  transports: ['websocket', 'polling']
 });
 
 // Track online users: { userId: socketId }

@@ -30,7 +30,7 @@ const PatientDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [dashboardRes, doctorRes, exercisesRes, dietsRes, logsRes] = await Promise.all([
+      const [, doctorRes, exercisesRes, dietsRes] = await Promise.all([
         patientsAPI.getDashboard(),
         patientsAPI.getAssignedDoctor().catch(() => ({ data: { doctor: null } })),
         patientsAPI.getExercises().catch(() => ({ data: { exercises: [] } })),

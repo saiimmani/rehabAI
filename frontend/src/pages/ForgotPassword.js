@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Button, Input, Card } from '../components/UIComponents';
+import { Button, Card } from '../components/UIComponents';
 import apiClient from '../services/apiClient';
 
 const ForgotPassword = () => {
@@ -22,7 +22,7 @@ const ForgotPassword = () => {
     setLoading(true);
     
     try {
-      const response = await apiClient.post('/auth/forgot-password', { email });
+      await apiClient.post('/auth/forgot-password', { email });
       setSuccess('An OTP has been sent to your email. Please check your inbox.');
       setStep(2);
     } catch (error) {
@@ -40,7 +40,7 @@ const ForgotPassword = () => {
     setLoading(true);
     
     try {
-      const response = await apiClient.post('/auth/verify-otp', { email, otp });
+      await apiClient.post('/auth/verify-otp', { email, otp });
       setSuccess('OTP verified successfully. Please enter your new password.');
       setStep(3);
     } catch (error) {
@@ -69,7 +69,7 @@ const ForgotPassword = () => {
     setLoading(true);
     
     try {
-      const response = await apiClient.post('/auth/reset-password', {
+      await apiClient.post('/auth/reset-password', {
         email,
         otp,
         newPassword

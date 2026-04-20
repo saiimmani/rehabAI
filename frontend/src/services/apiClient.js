@@ -2,22 +2,30 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+// Guard against accidental MongoDB URI as API URL
+if (API_BASE_URL.startsWith('mongodb')) {
+  console.error(
+    'CONFIGURATION ERROR: REACT_APP_API_URL is set to a MongoDB URI! ' +
+    'It should be your backend HTTP URL, e.g. https://rehabai-backend.onrender.com/api'
+  );
+}
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add token to requests if it exists
+// Attach JWT token to every request
 apiClient.interceptors.request.use(
   (config) => {
-    // 🛑 Prevent "Unsupported protocol mongodb" from crashing the browser network stack
+    // Safety guard — never hit a MongoDB URI
     if (config.baseURL && config.baseURL.startsWith('mongodb')) {
       return Promise.reject(new Error(
         'CONFIGURATION ERROR: Your frontend is trying to connect to a MongoDB database directly! ' +
-        'Please check your frontend/.env file and ensure REACT_APP_API_URL is set to http://localhost:5000/api ' +
-        '(You must restart your React server for .env changes to take effect)'
+        'Please check your frontend/.env file and ensure REACT_APP_API_URL is set to your backend URL.'
       ));
     }
 
@@ -30,14 +38,23 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle errors globally
+// Global response error handler
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Only redirect to login on 401 from actual API calls (not network failures)
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Use replace to avoid a back-button loop
+      window.location.replace('/#/login');
     }
+
+    // Enrich the error message for network failures
+    if (!error.response) {
+      error.message =
+        'Unable to reach the server. Please check your internet connection or try again later.';
+    }
+
     return Promise.reject(error);
   }
 );
