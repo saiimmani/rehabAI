@@ -593,21 +593,21 @@ exports.getProfile = async (req, res) => {
       fullName: `${user.firstName} ${user.lastName}`,
       email: user.email,
       phoneNumber: user.phone || '',
-      dateOfBirth: user.age ? `${new Date().getFullYear() - user.age}-01-01` : '1990-01-01',
-      address: profile?.address || '123 Recovery Lane, Mumbai, Maharashtra 400001',
+      dateOfBirth: user.age ? `${new Date().getFullYear() - user.age}-01-01` : 'Not provided',
+      address: profile?.address || 'Not provided',
       patientId: profile?.uniquePatientId || user.uniqueId,
       medical: {
-        condition: profile?.injuryType || 'Post ACL Surgery Rehabilitation',
-        startDate: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'February 7, 2024',
-        primaryTherapist: 'Assigned Physiotherapist',
-        expectedCompletion: 'May 7, 2024',
-        notes: profile?.medicalHistory || 'Patient is making excellent progress.'
+        condition: profile?.injuryType || 'Not provided',
+        startDate: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Not provided',
+        primaryTherapist: profile?.assignedDoctor ? 'Assigned' : 'Not assigned',
+        expectedCompletion: 'Not determined',
+        notes: profile?.medicalHistory || 'No medical notes available yet.'
       },
       stats: {
-        totalExercises: 42,
-        daysActive: 28,
-        recoveryProgress: 78,
-        streak: 7
+        totalExercises: 0,
+        daysActive: 0,
+        recoveryProgress: 0,
+        streak: 0
       }
     });
   } catch (error) {
