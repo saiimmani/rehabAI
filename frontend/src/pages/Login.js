@@ -5,14 +5,14 @@ import { AuthContext } from '../context/AuthContext';
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData]   = useState({ email: '', password: '' });
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [showPass, setShowPass]   = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
@@ -23,218 +23,157 @@ const Login = () => {
       await login(formData.email, formData.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Invalid credentials. Please try again.');
+      setError(err.message || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
   };
 
-  const fillDemo = (role) => {
-    const creds = {
-      patient:       { email: 'patient@test.com',       password: 'password123' },
-      doctor:        { email: 'doctor@test.com',         password: 'password123' },
-      physio:        { email: 'physio@test.com',         password: 'password123' },
+  const fillDemo = (type) => {
+    const map = {
+      patient: 'patient@test.com',
+      doctor:  'doctor@test.com',
+      physio:  'physio@test.com',
     };
-    if (creds[role]) {
-      setFormData(creds[role]);
-      setError('');
-    }
+    setFormData({ email: map[type] || '', password: 'password123' });
+    setError('');
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm animate-fade-in-up">
 
-      <div className="w-full max-w-md animate-fade-in-up">
-
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-3xl mb-5"
-            style={{
-              background: 'rgba(99,102,241,0.15)',
-              border: '1px solid rgba(99,102,241,0.3)',
-            }}
-          >
-            ❖
+        {/* ── Brand ── */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4"
+            style={{ background: 'rgba(99,102,241,0.18)', border: '1px solid rgba(99,102,241,0.28)' }}>
+            <span className="text-xl">❖</span>
           </div>
-          <h1 className="text-5xl font-black tracking-tight mb-2">
-            <span className="gradient-text">Rehab</span>
-            <span className="text-white">AI</span>
+          <h1 className="text-3xl font-black text-white tracking-tight">
+            Rehab<span className="gradient-text">AI</span>
           </h1>
-          <p className="text-slate-500 font-semibold text-xs uppercase tracking-[0.25em]">
+          <p className="text-slate-500 text-xs font-semibold uppercase tracking-widest mt-1">
             Intelligent Recovery Suite
           </p>
         </div>
 
-        {/* Card */}
-        <div
-          className="relative overflow-hidden"
-          style={{
-            background: 'rgba(255,255,255,0.05)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.09)',
-            borderRadius: '20px',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
-          }}
-        >
-          {/* Top glow accent */}
-          <div
-            className="absolute top-0 left-0 right-0 h-[2px]"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.9), rgba(168,85,247,0.9), transparent)' }}
-          />
+        {/* ── Card ── */}
+        <div className="glass-card p-7">
 
-          <div className="p-8">
-            <div className="mb-7">
-              <h2 className="text-2xl font-black text-white tracking-tight">Welcome Back</h2>
-              <p className="text-slate-500 text-sm mt-1">Sign in to continue your recovery journey</p>
+          {/* Card header accent */}
+          <div style={{ height: '2px', margin: '-28px -28px 24px',
+            background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.6), rgba(168,85,247,0.5), transparent)',
+            borderRadius: '14px 14px 0 0' }} />
+
+          <h2 className="text-xl font-bold text-white mb-1">Welcome back</h2>
+          <p className="text-slate-500 text-sm mb-6">Sign in to continue your recovery journey</p>
+
+          {/* ── Error ── */}
+          {error && (
+            <div className="mb-5 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm animate-fade-in"
+              style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5' }}>
+              <span className="text-base flex-shrink-0">⚠</span>
+              {error}
+            </div>
+          )}
+
+          {/* ── Form ── */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                Email
+              </label>
+              <input
+                type="email" name="email"
+                placeholder="you@example.com"
+                value={formData.email} onChange={handleChange}
+                className="premium-input" style={{ height: '44px' }}
+                required autoComplete="email"
+              />
             </div>
 
-            {error && (
-              <div
-                className="mb-5 px-4 py-3.5 rounded-2xl flex items-center gap-3 animate-fade-in"
-                style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}
-              >
-                <span className="text-red-400 text-lg flex-shrink-0">⚠️</span>
-                <p className="text-red-300 font-semibold text-sm">{error}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Email */}
-              <div>
-                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                  Email Address
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                  Password
                 </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg">✉️</span>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="you@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="premium-input pl-11 h-13"
-                    style={{ height: '52px' }}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                    Password
-                  </label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
-                  >
-                    Forgot?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg">🔑</span>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    placeholder="••••••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="premium-input pl-11 pr-12"
-                    style={{ height: '52px' }}
-                    required
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors text-sm font-semibold"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-14 font-black text-base rounded-2xl text-white relative overflow-hidden group transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                  boxShadow: '0 8px 30px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
-                }}
-              >
-                <span className="relative z-10 flex items-center justify-center gap-3">
-                  {loading ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                      </svg>
-                      Authenticating...
-                    </>
-                  ) : (
-                    'Sign In →'
-                  )}
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              </button>
-            </form>
-
-            {/* Register link */}
-            <div className="mt-6 text-center pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-              <p className="text-slate-500 text-sm">
-                New to RehabAI?{' '}
-                <Link to="/register" className="text-indigo-400 font-bold hover:text-indigo-300 transition-colors">
-                  Create Account
+                <Link to="/forgot-password"
+                  className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
+                  Forgot?
                 </Link>
-              </p>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPass ? 'text' : 'password'} name="password"
+                  placeholder="••••••••••"
+                  value={formData.password} onChange={handleChange}
+                  className="premium-input pr-14" style={{ height: '44px' }}
+                  required autoComplete="current-password"
+                />
+                <button type="button" tabIndex={-1}
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs font-semibold transition-colors px-1 py-0.5 rounded">
+                  {showPass ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
 
-            {/* Demo credentials */}
-            <div className="mt-6">
-              <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center mb-3">
-                Quick Demo Access
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { role: 'patient', label: 'Patient', icon: '🧑‍🦽', color: 'rgba(20,184,166,0.15)', border: 'rgba(20,184,166,0.3)', text: '#5eead4' },
-                  { role: 'doctor',  label: 'Doctor',  icon: '👨‍⚕️', color: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.3)', text: '#a5b4fc' },
-                  { role: 'physio',  label: 'Physio',  icon: '🏥',    color: 'rgba(168,85,247,0.15)', border: 'rgba(168,85,247,0.3)', text: '#d8b4fe' },
-                ].map(({ role, label, icon, color, border, text }) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => fillDemo(role)}
-                    className="p-2.5 rounded-xl text-center cursor-pointer transition-all duration-200 hover:scale-105"
-                    style={{ background: color, border: `1px solid ${border}` }}
-                  >
-                    <span className="block text-xl mb-0.5">{icon}</span>
-                    <span className="text-[10px] font-black uppercase tracking-wide" style={{ color }}>{label}</span>
-                  </button>
-                ))}
-              </div>
+            <button type="submit" disabled={loading}
+              className="w-full btn-primary font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ height: '44px' }}>
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  Signing in…
+                </>
+              ) : 'Sign In'}
+            </button>
+          </form>
+
+          {/* ── Register link ── */}
+          <p className="text-center text-slate-500 text-sm mt-5">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors">
+              Create one
+            </Link>
+          </p>
+
+          {/* ── Demo credentials ── */}
+          <div className="mt-6 pt-5"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-3">
+              Demo accounts
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { type: 'patient', label: 'Patient', icon: '🧑‍🦽', color: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.22)', text: '#6ee7b7' },
+                { type: 'doctor',  label: 'Doctor',  icon: '👨‍⚕️', color: 'rgba(99,102,241,0.12)', border: 'rgba(99,102,241,0.22)', text: '#a5b4fc' },
+                { type: 'physio',  label: 'Physio',  icon: '🏥',   color: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.22)', text: '#d8b4fe' },
+              ].map(({ type, label, icon, color, border, text }) => (
+                <button key={type} type="button" onClick={() => fillDemo(type)}
+                  className="py-2.5 rounded-xl text-center cursor-pointer transition-all hover:scale-105"
+                  style={{ background: color, border: `1px solid ${border}` }}>
+                  <span className="block text-lg mb-0.5">{icon}</span>
+                  <span className="block text-[10px] font-bold uppercase tracking-wide" style={{ color }}>
+                    {label}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Security badges */}
-        <div className="mt-8 flex items-center justify-center gap-8 opacity-30 hover:opacity-60 transition-opacity">
-          {[
-            { icon: '🔒', label: 'HIPAA Secure' },
-            { icon: '🛡️', label: 'SSL Encrypted' },
-            { icon: '⚡', label: 'AI Powered' },
-          ].map(({ icon, label }) => (
-            <span key={label} className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-              <span>{icon}</span> {label}
-            </span>
+        {/* ── Footer ── */}
+        <div className="flex items-center justify-center gap-6 mt-6 opacity-35">
+          {['🔒 HIPAA Secure', '🛡 SSL Encrypted', '⚡ AI Powered'].map(t => (
+            <span key={t} className="text-[9px] font-bold uppercase tracking-widest text-slate-500">{t}</span>
           ))}
         </div>
+
       </div>
     </div>
   );

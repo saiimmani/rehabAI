@@ -1,39 +1,71 @@
 const mongoose = require('mongoose');
 
+/**
+ * Normalise a MongoDB URI:
+ *  • Always ends with a database name ("rehab-ai")
+ *  • Accepts both mongodb:// and mongodb+srv://
+ *  • Strips trailing slash before appending the db name
+ */
+const normalizeURI = (uri = '') => {
+  const trimmed = uri.trim();
+
+  // Make sure the protocol is one of the two supported ones
+  if (!trimmed.startsWith('mongodb://') && !trimmed.startsWith('mongodb+srv://')) {
+    throw new Error(
+      `Unsupported MongoDB URI protocol.\n` +
+      `  Got: "${trimmed}"\n` +
+      `  Expected: mongodb://localhost:27017/rehab-ai  (local)\n` +
+      `       or: mongodb+srv://<user>:<pass>@cluster.mongodb.net/rehab-ai  (Atlas)`
+    );
+  }
+
+  // If the URI already has a database name, leave it alone
+  // Pattern: everything after the last '/' that isn't a query-string
+  const withoutScheme = trimmed.replace(/^mongodb(\+srv)?:\/\//, '');
+  const pathParts = withoutScheme.split('/');
+
+  // pathParts[0]  = host(s)
+  // pathParts[1]  = db name + optional query string (may be empty or missing)
+  const dbPart = pathParts[1] ? pathParts[1].split('?')[0] : '';
+
+  if (dbPart) {
+    // DB name already present — return as-is (remove trailing slash if any)
+    return trimmed.replace(/\/$/, '');
+  }
+
+  // No DB name — append "rehab-ai"
+  return trimmed.replace(/\/$/, '') + '/rehab-ai';
+};
+
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/rehab-ai';
+    const rawURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/rehab-ai';
+    const mongoURI = normalizeURI(rawURI);
 
-    // Mongoose 7+ removed useNewUrlParser and useUnifiedTopology options
-    // Using 127.0.0.1 instead of localhost avoids IPv6 resolution issues
-    const conn = await mongoose.connect(mongoURI);
+    console.log(`🔌 Connecting to MongoDB…`);
 
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
-
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      console.error('MongoDB connection error:', err);
+    const conn = await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 5000, // fail fast during dev
     });
 
-    mongoose.connection.on('disconnected', () => {
-      console.warn('MongoDB disconnected. Attempting to reconnect...');
-    });
+    console.log(`✅ MongoDB connected: ${conn.connection.host} / ${conn.connection.name}`);
 
-    mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected successfully');
-    });
+    mongoose.connection.on('error',        (err) => console.error('⚠️  MongoDB error:', err.message));
+    mongoose.connection.on('disconnected', ()    => console.warn ('⚠️  MongoDB disconnected'));
+    mongoose.connection.on('reconnected',  ()    => console.log  ('✅ MongoDB reconnected'));
 
-  } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
+  } catch (err) {
+    console.error('\n❌ MongoDB connection failed');
+    console.error('   Message:', err.message);
 
-    // Provide helpful hints based on error type
-    if (error.message.includes('ECONNREFUSED')) {
-      console.error('   → Make sure MongoDB is running locally on port 27017');
-      console.error('   → Or set a valid MONGODB_URI in your .env file (e.g., mongodb+srv://...)');
-    } else if (error.message.includes('bad auth') || error.message.includes('Authentication failed')) {
-      console.error('   → Check your MongoDB username and password in MONGODB_URI');
-    } else if (error.message.includes('Invalid scheme')) {
-      console.error('   → MONGODB_URI must start with mongodb:// or mongodb+srv://');
+    if (err.message.includes('ECONNREFUSED')) {
+      console.error('   → MongoDB is not running. Start it with:  mongod');
+      console.error('   → Or provide a cloud URI in your .env:  MONGODB_URI=mongodb+srv://...');
+    } else if (err.message.includes('Authentication') || err.message.includes('bad auth')) {
+      console.error('   → Wrong username / password in MONGODB_URI');
+    } else if (err.message.includes('Unsupported') || err.message.includes('protocol')) {
+      console.error('   → Check MONGODB_URI starts with  mongodb://  or  mongodb+srv://');
+      console.error('   → Also make sure a database name is included, e.g.:  mongodb://localhost:27017/rehab-ai');
     }
 
     process.exit(1);
