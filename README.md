@@ -183,3 +183,6 @@ The frontend will open at `http://localhost:3000`
 - The system uses JWT for stateless authentication
 - All routes require authentication middleware
 - Role-based access control is implemented at the route level
+
+
+### This was developed and upgraded by Immani Sai. By the reference of Open Source project RehabAI by Dheeraj Konakalla
