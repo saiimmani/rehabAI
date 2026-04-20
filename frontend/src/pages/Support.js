@@ -1,18 +1,15 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import React, { useState, useEffect } from 'react';
 import { Navbar, PageHeader, TabBar } from '../components/Layout';
-import { Card, Button, Badge, Input, Skeleton, EmptyState } from '../components/UIComponents';
+import { Card, Button, Badge } from '../components/UIComponents';
 import apiClient from '../services/apiClient';
 
 const Support = () => {
-  const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('professionals');
   const [professionals, setProfessionals] = useState([]);
   const [filteredProfessionals, setFilteredProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('all');
-  const [selectedChat, setSelectedChat] = useState(null);
 
   const specialties = [
     { id: 'all', label: 'All Professionals' },
@@ -27,13 +24,25 @@ const Support = () => {
   }, []);
 
   useEffect(() => {
-    filterProfessionals();
+    let filtered = professionals;
+    if (searchQuery) {
+      filtered = filtered.filter(prof =>
+        prof.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prof.specialization.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    if (selectedSpecialty !== 'all') {
+      filtered = filtered.filter(prof =>
+        prof.specialization.toLowerCase().includes(selectedSpecialty)
+      );
+    }
+    setFilteredProfessionals(filtered);
   }, [professionals, searchQuery, selectedSpecialty]);
 
   const fetchProfessionals = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/professionals');
+      const response = await apiClient.get('/professionals');
       setProfessionals(response.data.professionals || []);
     } catch (error) {
       console.error('Error fetching professionals:', error);
@@ -43,34 +52,13 @@ const Support = () => {
     }
   };
 
-  const filterProfessionals = () => {
-    let filtered = professionals;
-
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter(prof =>
-        prof.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prof.specialization.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Filter by specialty
-    if (selectedSpecialty !== 'all') {
-      filtered = filtered.filter(prof =>
-        prof.specialization.toLowerCase().includes(selectedSpecialty)
-      );
-    }
-
-    setFilteredProfessionals(filtered);
-  };
-
   const handleChatNow = (professional) => {
-    setSelectedChat(professional);
-    // In real app, this would navigate to chat or open chat modal
+    alert(`Opening chat with ${professional.name}...`);
   };
 
   const handleBookAppointment = (professionalId) => {
-    alert(`Booking appointment with ${professionals.find(p => p._id === professionalId)?.name}`);
+    const prof = professionals.find(p => p._id === professionalId);
+    alert(`Booking appointment with ${prof?.name}`);
   };
 
   const handleCall = (professional) => {
@@ -81,90 +69,6 @@ const Support = () => {
     alert(`Starting video call with ${professional.name}...`);
   };
 
-  const renderProfessionalCard = (professional) => (
-    <Card key={professional._id} className="flex flex-col h-full hover:shadow-xl transition-all duration-200">
-      {/* Professional Header */}
-      <div className="flex items-center gap-4 mb-6 pb-6 border-b">
-        <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-          {professional.initials || professional.name.split(' ').map(n => n[0]).join('')}
-        </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-bold text-gray-800">{professional.name}</h3>
-          <p className="text-sm text-gray-600">{professional.specialization}</p>
-          {professional.subSpecialty && (
-            <p className="text-xs text-gray-500">{professional.subSpecialty}</p>
-          )}
-        </div>
-        {professional.online && (
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-        )}
-      </div>
-
-      {/* Rating and Info */}
-      <div className="mb-4 pb-4 border-b">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-yellow-400">⭐ {professional.rating}</span>
-          <span className="text-sm text-gray-600">({professional.reviews} reviews)</span>
-        </div>
-        <div className="flex gap-1 flex-wrap">
-          {professional.services?.map((service, idx) => (
-            <Badge key={idx} variant="blue" className="text-xs">
-              {service}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      {/* Availability */}
-      <div className="mb-4 pb-4 border-b">
-        <p className="text-sm text-gray-700">
-          <span className="font-semibold">📅 {professional.nextAvailable}</span>
-        </p>
-        <p className="text-xs text-gray-500">Available for appointment</p>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="space-y-3 mt-auto">
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="flex-1"
-            onClick={() => handleCall(professional)}
-            title="Phone Call"
-          >
-            📞 Call
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="flex-1"
-            onClick={() => handleVideo(professional)}
-            title="Video Call"
-          >
-            📹 Video
-          </Button>
-        </div>
-        <Button
-          variant="primary"
-          size="sm"
-          className="w-full"
-          onClick={() => handleChatNow(professional)}
-        >
-          💬 Chat Now
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => handleBookAppointment(professional._id)}
-        >
-          📅 Book Appointment
-        </Button>
-      </div>
-    </Card>
-  );
-
   const tabs = [
     { id: 'professionals', label: 'Find Professionals' },
     { id: 'active', label: 'Active Chats' }
@@ -172,10 +76,11 @@ const Support = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen relative">
         <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <Skeleton count={3} height={300} />
+        <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+          <div className="w-12 h-12 border-4 border-slate-800 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Loading Professionals...</p>
         </div>
       </div>
     );
@@ -187,25 +92,21 @@ const Support = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
-        {/* Page Header */}
         <PageHeader
           title="🤝 Support & Healthcare Experts"
           subtitle="Connect with top-tier rehabilitation professionals for specialized guidance"
         />
 
-        {/* Tab Navigation */}
         <div className="mb-10">
-          <TabBar 
+          <TabBar
             tabs={tabs}
             activeTab={activeTab}
             onChange={setActiveTab}
           />
         </div>
 
-        {/* Find Professionals Tab */}
         {activeTab === 'professionals' && (
           <div className="animate-fade-in-up">
-            {/* Search and Filter */}
             <div className="mb-10 space-y-6">
               <div className="flex flex-col md:flex-row gap-4 items-center">
                 <div className="relative flex-1 w-full group">
@@ -220,7 +121,6 @@ const Support = () => {
                 </div>
               </div>
 
-              {/* Specialty Filter Buttons */}
               <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin">
                 {specialties.map(specialty => (
                   <button
@@ -238,7 +138,6 @@ const Support = () => {
               </div>
             </div>
 
-            {/* Professionals Grid */}
             {filteredProfessionals.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredProfessionals.map(professional => (
@@ -275,7 +174,7 @@ const Support = () => {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="bg-slate-800/30 rounded-xl p-3 border border-slate-700/30">
                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Next Available</p>
                         <p className="text-sm font-bold text-indigo-300">📅 {professional.nextAvailable}</p>
@@ -284,13 +183,13 @@ const Support = () => {
 
                     <div className="mt-auto space-y-3">
                       <div className="grid grid-cols-2 gap-2">
-                        <button 
+                        <button
                           onClick={() => handleCall(professional)}
                           className="py-2.5 glass-card bg-slate-800/60 border-slate-700/50 text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-700/80 transition-all flex items-center justify-center gap-2"
                         >
                           📞 Call
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleVideo(professional)}
                           className="py-2.5 glass-card bg-slate-800/60 border-slate-700/50 text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-700/80 transition-all flex items-center justify-center gap-2"
                         >
@@ -325,7 +224,6 @@ const Support = () => {
           </div>
         )}
 
-        {/* Active Chats Tab */}
         {activeTab === 'active' && (
           <div className="animate-fade-in-up">
             <div className="text-center py-20 glass-panel border-dashed border-2 border-slate-700/50 rounded-3xl">
@@ -338,7 +236,6 @@ const Support = () => {
       </div>
     </div>
   );
-
 };
 
 export default Support;

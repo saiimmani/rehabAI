@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Navbar, PageHeader } from '../components/Layout';
-import { Card, Button, Badge } from '../components/UIComponents';
+import { Card, Button } from '../components/UIComponents';
 import apiClient from '../services/apiClient';
 
 const SessionScheduling = () => {

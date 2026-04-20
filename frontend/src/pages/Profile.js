@@ -85,10 +85,10 @@ const Profile = () => {
   }
 
   const stats = [
-    { label: 'Total Exercises', value: profileData?.stats?.totalExercises || 42, icon: '🏃' },
-    { label: 'Days Active', value: profileData?.stats?.daysActive || 28, icon: '📅' },
-    { label: 'Recovery Progress', value: `${profileData?.stats?.recoveryProgress || 78}%`, icon: '📈' },
-    { label: 'Current Streak', value: `${profileData?.stats?.streak || 7} days`, icon: '🔥' }
+    { label: 'Total Exercises', value: profileData?.stats?.totalExercises || 0, icon: '🏃' },
+    { label: 'Days Active', value: profileData?.stats?.daysActive || 0, icon: '📅' },
+    { label: 'Recovery Progress', value: `${profileData?.stats?.recoveryProgress || 0}%`, icon: '📈' },
+    { label: 'Current Streak', value: `${profileData?.stats?.streak || 0} days`, icon: '🔥' }
   ];
 
   const tabs = [
@@ -145,7 +145,7 @@ const Profile = () => {
           <TabBar
             tabs={tabs}
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onChange={setActiveTab}
           />
         </div>
 
@@ -227,23 +227,23 @@ const Profile = () => {
                 <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Full Name</p>
-                    <p className="text-lg font-semibold text-gray-800">{profileData?.fullName || `${user?.firstName} ${user?.lastName}`}</p>
+                    <p className="text-lg font-semibold text-gray-800">{profileData?.fullName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Email Address</p>
-                    <p className="text-lg font-semibold text-gray-800">{profileData?.email || 'john.doe@example.com'}</p>
+                    <p className="text-lg font-semibold text-gray-800">{profileData?.email || user?.email || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Phone Number</p>
-                    <p className="text-lg font-semibold text-gray-800">{profileData?.phoneNumber || '+91 98765 43210'}</p>
+                    <p className="text-lg font-semibold text-gray-800">{profileData?.phoneNumber || user?.phone || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Date of Birth</p>
-                    <p className="text-lg font-semibold text-gray-800">{profileData?.dateOfBirth || 'January 15, 1990'}</p>
+                    <p className="text-lg font-semibold text-gray-800">{profileData?.dateOfBirth || user?.age ? `${user.age} years old` : 'Not provided'}</p>
                   </div>
                   <div className="md:col-span-2">
                     <p className="text-sm text-gray-600 mb-1">Address</p>
-                    <p className="text-lg font-semibold text-gray-800">{profileData?.address || '123 Recovery Lane, Mumbai, Maharashtra 400001'}</p>
+                    <p className="text-lg font-semibold text-gray-800">{profileData?.address || 'Not provided'}</p>
                   </div>
                 </div>
               )}
@@ -260,25 +260,25 @@ const Profile = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="border rounded-lg p-4">
                   <p className="text-sm text-gray-600 mb-1">Condition</p>
-                  <p className="text-lg font-semibold text-gray-800">{profileData?.medical?.condition || 'Post ACL Surgery Rehabilitation'}</p>
+                  <p className="text-lg font-semibold text-gray-800">{profileData?.medical?.condition || 'Not provided'}</p>
                 </div>
                 <div className="border rounded-lg p-4">
                   <p className="text-sm text-gray-600 mb-1">Start Date</p>
-                  <p className="text-lg font-semibold text-gray-800">{profileData?.medical?.startDate || 'February 7, 2024'}</p>
+                  <p className="text-lg font-semibold text-gray-800">{profileData?.medical?.startDate || 'Not provided'}</p>
                 </div>
                 <div className="border rounded-lg p-4">
                   <p className="text-sm text-gray-600 mb-1">Primary Therapist</p>
-                  <p className="text-lg font-semibold text-gray-800">{profileData?.medical?.primaryTherapist || 'Dr. Priya Sharma'}</p>
+                  <p className="text-lg font-semibold text-gray-800">{profileData?.medical?.primaryTherapist || 'Not assigned'}</p>
                 </div>
                 <div className="border rounded-lg p-4">
                   <p className="text-sm text-gray-600 mb-1">Expected Completion</p>
-                  <p className="text-lg font-semibold text-gray-800">{profileData?.medical?.expectedCompletion || 'May 7, 2024'}</p>
+                  <p className="text-lg font-semibold text-gray-800">{profileData?.medical?.expectedCompletion || 'Not provided'}</p>
                 </div>
               </div>
 
               <div className="border rounded-lg p-4">
                 <p className="text-sm text-gray-600 mb-2">Notes</p>
-                <p className="text-gray-700">{profileData?.medical?.notes || 'Patient is making excellent progress with knee strengthening exercises. Continue current exercise regimen and gradually increase intensity. Next evaluation scheduled for March 15, 2024.'}</p>
+                <p className="text-gray-700">{profileData?.medical?.notes || 'No medical notes available yet.'}</p>
               </div>
             </div>
           </Card>

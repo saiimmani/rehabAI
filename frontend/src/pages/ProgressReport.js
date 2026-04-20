@@ -1,16 +1,13 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
 import { patientsAPI } from '../services/api';
 import { Navbar } from '../components/Layout';
 
 export default function ProgressReport() {
   const navigate = useNavigate();
-  const { user, logout } = useContext(AuthContext);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [timeRange, setTimeRange] = useState('30'); // days
+  const [error, setError] = useState([]);
   const [stats, setStats] = useState({
     totalExercises: 0,
     completedExercises: 0,
@@ -74,11 +71,6 @@ export default function ProgressReport() {
     if (percentage >= 60) return 'bg-blue-500';
     if (percentage >= 40) return 'bg-yellow-500';
     return 'bg-red-500';
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
   };
 
   if (loading) {
