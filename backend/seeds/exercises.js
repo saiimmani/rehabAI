@@ -99,13 +99,21 @@ const defaultExercises = [
 // Function to seed exercises
 async function seedExercises() {
   try {
-    // Don't connect again if already connected (in server context)
-    // If running standalone, connect
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/rehab-ai', {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
+    // Only connect to DB if this script is run standalone (not imported by server.js)
+    if (require.main === module) {
+      if (mongoose.connection.readyState === 0) {
+        // Simple fallback connection for standalone script
+        const rawURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/rehab-ai';
+        const dbName = rawURI.split('/').pop().split('?')[0];
+        const mongoURI = dbName ? rawURI : rawURI.replace(/\/$/, '') + '/rehab-ai';
+        
+        await mongoose.connect(mongoURI);
+      }
+    } else {
+      // If called from server.js, wait for connection if it's still connecting
+      if (mongoose.connection.readyState === 2) {
+        await new Promise(resolve => mongoose.connection.once('connected', resolve));
+      }
     }
 
     // Check if exercises already exist

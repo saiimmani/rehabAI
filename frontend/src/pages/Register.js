@@ -62,7 +62,7 @@ const Register = () => {
     { value: 'physiotherapist', label: 'Physiotherapist',icon: '🏥'   },
   ];
 
-  const inputField = (name, label, type = 'text', placeholder = '') => (
+  const inputField = (name, label, type = 'text', placeholder = '', extraProps = {}) => (
     <div key={name}>
       <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
         {label}
@@ -71,6 +71,7 @@ const Register = () => {
         type={type} name={name} placeholder={placeholder}
         value={formData[name]} onChange={handleChange}
         className="premium-input" style={{ height: '42px' }}
+        {...extraProps}
       />
     </div>
   );
@@ -175,8 +176,12 @@ const Register = () => {
 
                 {/* Age & Phone */}
                 <div className="grid grid-cols-2 gap-3">
-                  {inputField('age',   'Age',   'number', '28')}
-                  {inputField('phone', 'Phone', 'tel',    '+1 555 000')}
+                  {inputField('age',   'Age',   'number', '28', { min: 1, max: 120 })}
+                  {inputField('phone', 'Phone', 'tel',    '10 digit number', { 
+                    maxLength: 10,
+                    pattern: '[0-9]{10}',
+                    onInput: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); }
+                  })}
                 </div>
               </div>
             ) : (
