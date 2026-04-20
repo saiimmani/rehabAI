@@ -381,6 +381,11 @@
     to   { opacity: 1; transform: translateX(0); }
   }
 
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(100%); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
   /* Custom scrollbar */
   .scrollbar-thin::-webkit-scrollbar        { width: 4px; }
   .scrollbar-thin::-webkit-scrollbar-track  { background: transparent; }
@@ -391,4 +396,95 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: rgba(99,102,241,0.55);
   }
+
+  /* Horizontal scrollbar for tab bars on mobile */
+  .scrollbar-thin::-webkit-scrollbar { height: 2px; }
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE RESPONSIVE FIXES
+   ═══════════════════════════════════════════════ */
+
+/* Pages need bottom padding for mobile bottom tab bar */
+@media (max-width: 767px) {
+  /* Add bottom space so content isn't hidden behind bottom nav */
+  .page-content {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Every main page container gets bottom spacing on mobile */
+  .max-w-7xl {
+    padding-bottom: 80px;
+  }
+
+  /* Tighter horizontal padding on mobile */
+  .mobile-px { padding-left: 12px !important; padding-right: 12px !important; }
+
+  /* Headings scale down on mobile */
+  h1 { font-size: clamp(1.4rem, 6vw, 2.5rem) !important; }
+  h2 { font-size: clamp(1.1rem, 4.5vw, 1.8rem) !important; }
+
+  /* Glass cards: slightly tighter on mobile */
+  .glass-card { border-radius: 12px !important; }
+
+  /* Modals: full-width and anchored to bottom on mobile */
+  .modal-mobile-full {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-width: 100% !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Make buttons full-width on mobile where needed */
+  .btn-mobile-full {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Tab bar: hide scrollbar but allow scroll */
+  .tab-bar-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tab-bar-scroll::-webkit-scrollbar { display: none; }
+
+  /* Stats grids: 2 cols on mobile */
+  .stats-grid-mobile {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Patient dashboard action buttons stacked on mobile */
+  .action-buttons-mobile {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  .action-buttons-mobile > * {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* Touch targets: minimum 44px for accessibility */
+button, a, [role="button"] {
+  min-height: 36px;
+}
+
+@media (max-width: 767px) {
+  button, a, [role="button"] {
+    min-height: 44px;
+  }
+}
+
+/* Safe area insets for notched phones */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent horizontal overflow on mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
 }

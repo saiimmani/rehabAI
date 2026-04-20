@@ -121,21 +121,21 @@ const PatientDashboard = () => {
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 py-8 relative z-10">
-        <div className="flex justify-between items-center mb-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
+        <div className="mb-6">
           <PageHeader 
             title={`Welcome, ${user?.firstName}! 👋`}
             subtitle="Your recovery progress and treatment plans"
           />
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 mt-3">
             <Button variant="outline" onClick={() => navigate('/sessions')}>
               📅 Book Session
             </Button>
             <Button variant="secondary" onClick={() => navigate('/ai-rehab-plan')}>
-              🤖 Generate AI Plan
+              🤖 AI Plan
             </Button>
             <Button variant="primary" onClick={() => setShowLogModal(true)}>
-              📝 Log Daily Health
+              📝 Log Health
             </Button>
           </div>
         </div>
@@ -145,8 +145,8 @@ const PatientDashboard = () => {
 
         {/* Daily Log Modal */}
         {showLogModal && (
-          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in-up">
-            <div className="glass-card max-w-md w-full border border-slate-700/80">
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 animate-fade-in-up p-4">
+            <div className="glass-card w-full max-w-md sm:max-w-md border border-slate-700/80" style={{ borderRadius: '20px 20px 12px 12px' }}>
               <h2 className="text-2xl font-bold mb-4 text-slate-100">Log Daily Health</h2>
               <form onSubmit={handleSubmitDailyLog}>
                 <div className="mb-4">

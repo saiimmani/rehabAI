@@ -82,11 +82,15 @@ const Register = () => {
 
         {/* ── Brand ── */}
         <div className="text-center mb-7">
-          <Link to="/login" className="inline-flex items-center justify-center gap-2 group">
-            <span className="w-9 h-9 rounded-lg flex items-center justify-center text-base"
-              style={{ background: 'rgba(99,102,241,0.18)', border: '1px solid rgba(99,102,241,0.28)' }}>
-              ❖
-            </span>
+          <Link to="/login" className="inline-flex flex-col items-center gap-2 group">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+              <img
+                src={`${process.env.PUBLIC_URL}/logo192.png`}
+                alt="Rehab AI Logo"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <span className="text-2xl font-black text-white">
               Rehab<span className="gradient-text">AI</span>
             </span>
