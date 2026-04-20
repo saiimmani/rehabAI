@@ -1,4 +1,5 @@
 # render.yaml — Deploy RehabAI backend to Render.com (free tier)
+# This file tells Render EXACTLY what to do — no guessing
 # Docs: https://render.com/docs/yaml-spec
 
 services:
@@ -9,7 +10,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node src/server.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
@@ -17,9 +18,9 @@ services:
       - key: PORT
         value: 5000
       - key: MONGODB_URI
-        sync: false          # Set this in Render dashboard — never commit real URI
+        sync: false
       - key: JWT_SECRET
-        sync: false          # Set this in Render dashboard
+        sync: false
       - key: JWT_EXPIRE
         value: 7d
       - key: ALLOWED_ORIGINS

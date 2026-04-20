@@ -8,7 +8,9 @@
     "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm start\"",
     "server": "cd backend && npm run dev",
     "client": "cd frontend && npm start",
-    "build": "cd backend && npm install && cd ../frontend && npm install && npm run build"
+    "build": "cd backend && npm install",
+    "start": "cd backend && npm start",
+    "build:frontend": "cd frontend && npm install && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.1"
