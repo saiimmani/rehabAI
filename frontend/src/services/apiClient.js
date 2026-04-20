@@ -42,11 +42,15 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Only redirect to login on 401 from actual API calls (not network failures)
+    // Redirect to login on 401 ONLY when the user is NOT already on the login/register page
+    // This prevents the white-screen bug where a failed login attempt triggers a redirect loop
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      // Use replace to avoid a back-button loop
-      window.location.replace('/#/login');
+      const currentHash = window.location.hash;
+      const isAuthPage = currentHash.includes('/login') || currentHash.includes('/register');
+      if (!isAuthPage) {
+        localStorage.removeItem('token');
+        window.location.replace('/#/login');
+      }
     }
 
     // Enrich the error message for network failures
