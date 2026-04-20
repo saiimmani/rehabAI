@@ -171,6 +171,10 @@ app.use('/api/messages', require('./routes/messages'));
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/conversations', require('./routes/conversation'));
+// Collection-level routes (previously missing — caused 404 network errors)
+app.use('/api/doctors', require('./routes/doctors'));
+app.use('/api/patients', require('./routes/patients'));
+app.use('/api/physiotherapists', require('./routes/physiotherapists'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
