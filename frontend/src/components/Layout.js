@@ -141,11 +141,11 @@ export const Navbar = () => {
             <div
               className="absolute right-0 mt-2 w-60 animate-scale-in overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, rgba(15,15,40,0.97) 0%, rgba(20,20,55,0.95) 100%)',
-                backdropFilter: 'blur(32px)',
-                border: '1px solid rgba(255,255,255,0.10)',
-                borderRadius: '16px',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08)',
+                background: 'rgba(14, 16, 32, 0.96)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '14px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
               }}
             >
               {/* User info header */}

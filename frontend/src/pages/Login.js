@@ -42,33 +42,17 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center overflow-hidden" style={{ background: '#050510' }}>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
 
-      {/* Ambient orbs */}
-      <div className="bg-orb bg-orb-1" />
-      <div className="bg-orb bg-orb-2" />
-      <div className="bg-orb bg-orb-3" />
-
-      {/* Grid noise texture overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-20"
-        style={{
-          backgroundImage: `linear-gradient(rgba(99,102,241,0.05) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(99,102,241,0.05) 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
-        }}
-      />
-
-      <div className="relative z-10 w-full max-w-md px-4 py-12 animate-fade-in-up">
+      <div className="w-full max-w-md animate-fade-in-up">
 
         {/* Logo */}
         <div className="text-center mb-10">
           <div
-            className="inline-flex items-center justify-center w-20 h-20 rounded-3xl text-4xl mb-5 animate-glow-pulse"
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-3xl mb-5"
             style={{
-              background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.3))',
-              border: '1px solid rgba(99,102,241,0.5)',
-              boxShadow: '0 0 40px rgba(99,102,241,0.3)',
+              background: 'rgba(99,102,241,0.15)',
+              border: '1px solid rgba(99,102,241,0.3)',
             }}
           >
             ❖
@@ -86,12 +70,12 @@ const Login = () => {
         <div
           className="relative overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)',
-            backdropFilter: 'blur(32px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '28px',
-            boxShadow: '0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.10)',
+            background: 'rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255,255,255,0.09)',
+            borderRadius: '20px',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
           }}
         >
           {/* Top glow accent */}

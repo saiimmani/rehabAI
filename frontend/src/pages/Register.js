@@ -54,21 +54,7 @@ const Register = () => {
   ];
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center overflow-hidden py-10 px-4" style={{ background: '#050510' }}>
-      {/* Ambient orbs */}
-      <div className="bg-orb bg-orb-1" />
-      <div className="bg-orb bg-orb-2" />
-      <div className="bg-orb bg-orb-3" />
-
-      {/* Grid texture */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-20"
-        style={{
-          backgroundImage: `linear-gradient(rgba(99,102,241,0.05) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(99,102,241,0.05) 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
-        }}
-      />
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
 
       <div className="relative z-10 w-full max-w-md animate-fade-in-up">
         {/* Logo */}
@@ -87,12 +73,12 @@ const Register = () => {
         <div
           className="relative overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)',
-            backdropFilter: 'blur(32px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '28px',
-            boxShadow: '0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.10)',
+            background: 'rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255,255,255,0.09)',
+            borderRadius: '20px',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
           }}
         >
           {/* Top accent */}
