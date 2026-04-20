@@ -16,11 +16,9 @@ const PatientDashboard = () => {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('overview');
-  const [dashboardData, setDashboardData] = useState(null);
   const [assignedDoctor, setAssignedDoctor] = useState(null);
   const [assignedExercises, setAssignedExercises] = useState([]);
   const [dietPlans, setDietPlans] = useState([]);
-  const [exerciseLogs, setExerciseLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [completingExerciseId, setCompletingExerciseId] = useState(null);
   const [showLogModal, setShowLogModal] = useState(false);
@@ -40,11 +38,9 @@ const PatientDashboard = () => {
         patientsAPI.getExerciseLogs().catch(() => ({ data: { logs: [] } }))
       ]);
       
-      setDashboardData(dashboardRes.data);
       setAssignedDoctor(doctorRes.data.doctor);
       setAssignedExercises(exercisesRes.data.exercises || []);
       setDietPlans(dietsRes.data.dietPlans || []);
-      setExerciseLogs(logsRes.data.logs || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -117,19 +113,6 @@ const PatientDashboard = () => {
         return <Badge variant="gray">⏳ Pending</Badge>;
       default:
         return <Badge>{status}</Badge>;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'completed':
-        return 'border-l-4 border-green-500 bg-green-50';
-      case 'in-progress':
-        return 'border-l-4 border-blue-500 bg-blue-50';
-      case 'pending':
-        return 'border-l-4 border-gray-500 bg-gray-50';
-      default:
-        return 'border-l-4 border-gray-300 bg-gray-50';
     }
   };
 
@@ -360,6 +343,25 @@ const PatientDashboard = () => {
                               <div className="mb-6 p-4 bg-indigo-900/30 rounded-xl border border-indigo-500/20 shadow-inner">
                                 <p className="text-sm text-indigo-300 font-bold mb-2 uppercase tracking-wider">Instructions</p>
                                 <p className="text-sm text-slate-300 leading-relaxed">{exercise.instructions}</p>
+                              </div>
+                            )}
+
+                            {exercise?.videoUrl && (
+                              <div className="mb-6">
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">🎬 Video Guidance</p>
+                                <div
+                                  className="relative rounded-2xl overflow-hidden border border-indigo-500/20"
+                                  style={{ paddingTop: '56.25%' }}
+                                >
+                                  <iframe
+                                    className="absolute inset-0 w-full h-full"
+                                    src={exercise.videoUrl}
+                                    title={`${exercise.name} guidance video`}
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                    loading="lazy"
+                                  />
+                                </div>
                               </div>
                             )}
 

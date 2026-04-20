@@ -15,6 +15,7 @@ const defaultExercises = [
     duration: { value: 15, unit: 'minutes' },
     repetitions: 10,
     difficulty: 'easy',
+    videoUrl: 'https://www.youtube.com/embed/rsSV_lqbEVo',
     isActive: true
   },
   {
@@ -26,6 +27,7 @@ const defaultExercises = [
     duration: { value: 10, unit: 'minutes' },
     repetitions: 15,
     difficulty: 'easy',
+    videoUrl: 'https://www.youtube.com/embed/ldUwIBccnuw',
     isActive: true
   },
   {
@@ -37,6 +39,7 @@ const defaultExercises = [
     duration: { value: 12, unit: 'minutes' },
     repetitions: 8,
     difficulty: 'easy',
+    videoUrl: 'https://www.youtube.com/embed/mORoTbGfhPU',
     isActive: true
   },
   {
@@ -48,6 +51,7 @@ const defaultExercises = [
     duration: { value: 10, unit: 'minutes' },
     repetitions: 12,
     difficulty: 'easy',
+    videoUrl: 'https://www.youtube.com/embed/mWOWpBGGY4k',
     isActive: true
   },
   {
@@ -59,6 +63,7 @@ const defaultExercises = [
     duration: { value: 20, unit: 'minutes' },
     repetitions: 10,
     difficulty: 'hard',
+    videoUrl: 'https://www.youtube.com/embed/0Nt2EmOEcJQ',
     isActive: true
   },
   {
@@ -70,6 +75,7 @@ const defaultExercises = [
     duration: { value: 15, unit: 'minutes' },
     repetitions: 15,
     difficulty: 'moderate',
+    videoUrl: 'https://www.youtube.com/embed/QN1oZVMMRjE',
     isActive: true
   },
   {
@@ -81,6 +87,7 @@ const defaultExercises = [
     duration: { value: 8, unit: 'minutes' },
     repetitions: 10,
     difficulty: 'easy',
+    videoUrl: 'https://www.youtube.com/embed/LXjYdUS8NBM',
     isActive: true
   },
   {
@@ -92,6 +99,7 @@ const defaultExercises = [
     duration: { value: 10, unit: 'minutes' },
     repetitions: 8,
     difficulty: 'easy',
+    videoUrl: 'https://www.youtube.com/embed/zpOVtbN-Uyk',
     isActive: true
   }
 ];
