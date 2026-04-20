@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/rehabAI/static/css/main.fe91a31a.css",
-    "main.js": "/rehabAI/static/js/main.7eebd988.js",
+    "main.css": "/rehabAI/static/css/main.4323ad27.css",
+    "main.js": "/rehabAI/static/js/main.f776d787.js",
     "index.html": "/rehabAI/index.html",
-    "main.fe91a31a.css.map": "/rehabAI/static/css/main.fe91a31a.css.map",
-    "main.7eebd988.js.map": "/rehabAI/static/js/main.7eebd988.js.map"
+    "main.4323ad27.css.map": "/rehabAI/static/css/main.4323ad27.css.map",
+    "main.f776d787.js.map": "/rehabAI/static/js/main.f776d787.js.map"
   },
   "entrypoints": [
-    "static/css/main.fe91a31a.css",
-    "static/js/main.7eebd988.js"
+    "static/css/main.4323ad27.css",
+    "static/js/main.f776d787.js"
   ]
 }
