@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/rehabAI/static/css/main.ea057139.css",
+    "main.js": "/rehabAI/static/js/main.5808f68d.js",
+    "index.html": "/rehabAI/index.html",
+    "main.ea057139.css.map": "/rehabAI/static/css/main.ea057139.css.map",
+    "main.5808f68d.js.map": "/rehabAI/static/js/main.5808f68d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ea057139.css",
+    "static/js/main.5808f68d.js"
+  ]
+}
