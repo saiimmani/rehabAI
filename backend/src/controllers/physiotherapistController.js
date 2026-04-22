@@ -15,9 +15,11 @@ exports.getAllPatients = async (req, res) => {
       .filter(
         (profile) =>
           profile.assignedPhysiotherapist &&
-          profile.assignedPhysiotherapist.toString() !== physiotherapistId
+          profile.assignedPhysiotherapist.toString() !== physiotherapistId.toString()
       )
       .map((profile) => profile.patientId);
+
+    console.log(`Physiotherapist ${physiotherapistId}: Found ${assignedToOthersPatientIds.length} patients assigned to others`);
 
     const allPatients = await User.find({
       role: 'patient',

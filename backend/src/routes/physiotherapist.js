@@ -7,6 +7,12 @@ const { authMiddleware, roleMiddleware } = require('../middleware/auth');
 router.use(authMiddleware);
 router.use(roleMiddleware('physiotherapist'));
 
+// GET /api/mentor/all-patients - Get all available patients
+router.get('/all-patients', physiotherapistController.getAllPatients);
+
+// POST /api/mentor/assign-patient - Assign patient to physiotherapist
+router.post('/assign-patient', physiotherapistController.assignPatient);
+
 // GET /api/mentor/patients - Get all assigned patients
 router.get('/patients', physiotherapistController.getPatients);
 

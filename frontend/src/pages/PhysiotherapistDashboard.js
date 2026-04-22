@@ -107,10 +107,27 @@ const PhysiotherapistDashboard = () => {
     }
   };
 
+  const handleAssignPatientDirect = async (patientId) => {
+    setSending(true);
+    setSelectedPatientToAssign(patientId);
+    try {
+      await physiotherapistsAPI.assignPatient({ patientId });
+      alert('Patient assigned successfully!');
+      fetchData();
+      setActiveTab('patients');
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setSending(false);
+      setSelectedPatientToAssign('');
+    }
+  };
+
   if (loading) return <div className="min-h-screen"><Navbar /><div className="p-6"><Skeleton count={3} /></div></div>;
 
   const tabs = [
-    { id: 'patients', label: `My Patients (${assignedPatients.length})` }
+    { id: 'patients', label: `My Patients (${assignedPatients.length})` },
+    { id: 'available', label: `Available Patients (${availablePatients.length})` }
   ];
 
   const stats = [
@@ -156,14 +173,6 @@ const PhysiotherapistDashboard = () => {
               <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                 <span>👥</span> My Assigned Patients
               </h2>
-              {availablePatients.length > 0 && (
-                <Button
-                  variant="primary"
-                  onClick={() => setShowAssignPatientModal(true)}
-                >
-                  + Assign Patient
-                </Button>
-              )}
             </div>
 
             {assignedPatients.length > 0 ? (
@@ -226,7 +235,59 @@ const PhysiotherapistDashboard = () => {
               <EmptyState
                 icon="👥"
                 title="No patients assigned yet"
-                description={availablePatients.length > 0 ? 'Assign patients to get started' : 'No unassigned patients available'}
+                description={availablePatients.length > 0 ? 'You have no assigned patients, but there are unassigned patients available.' : 'No unassigned patients available in the system.'}
+                action={availablePatients.length > 0 && (
+                  <Button variant="primary" onClick={() => setActiveTab('available')}>
+                    View Available Patients
+                  </Button>
+                )}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Available Patients Tab */}
+        {activeTab === 'available' && (
+          <div className="space-y-4 animate-fade-in-up">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                <span>🔍</span> Unassigned Patients
+              </h2>
+            </div>
+
+            {availablePatients.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {availablePatients.map((patient) => (
+                  <Card key={patient._id} className="border-t-4 border-amber-500 hover:-translate-y-1 transition-transform group relative overflow-hidden">
+                    <div className="absolute -right-10 -top-10 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 pointer-events-none"></div>
+                    <div className="mb-4">
+                      <h3 className="text-xl font-bold text-slate-100 drop-shadow-sm mb-1">
+                        {patient.firstName} {patient.lastName}
+                      </h3>
+                      <p className="text-sm text-slate-400">{patient.email}</p>
+                      {patient.age && (
+                        <p className="text-sm text-slate-400 mt-1">Age: <span className="text-slate-300 font-medium">{patient.age}</span></p>
+                      )}
+                    </div>
+
+                    <div className="mt-auto">
+                      <Button
+                        variant="primary"
+                        onClick={() => handleAssignPatientDirect(patient._id)}
+                        className="w-full"
+                        loading={sending && selectedPatientToAssign === patient._id}
+                      >
+                        Assign to Me
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon="🔍"
+                title="No unassigned patients"
+                description="All patients in the system are currently assigned to physiotherapists."
               />
             )}
           </div>

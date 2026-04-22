@@ -1,9 +1,90 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { physiotherapistsAPI } from '../services/api';
+import { exercisesAPI } from '../services/api';
 import { Navbar, PageHeader } from '../components/Layout';
 import { Card, Button, Badge, Input, Skeleton, EmptyState, Modal } from '../components/UIComponents';
-import apiClient from '../services/apiClient';
+
+const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+
+const defaultExerciseForm = {
+  name: '',
+  description: '',
+  category: 'stretching',
+  difficulty: 'moderate',
+  durationValue: '',
+  durationUnit: 'minutes',
+  repetitions: '',
+  bodyParts: '',
+  videoUrl: '',
+  imageUrl: '',
+  instructionFileUrl: '',
+  instructions: '',
+  videoFile: null,
+  imageFile: null,
+  instructionFile: null
+};
+
+const resolveMediaUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${API_BASE_URL}${url}`;
+};
+
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return '';
+
+  if (url.includes('youtube.com/embed/')) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+    if (parsed.hostname.includes('youtu.be')) {
+      const videoId = parsed.pathname.replace('/', '');
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    }
+
+    if (parsed.hostname.includes('youtube.com')) {
+      const videoId = parsed.searchParams.get('v');
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    }
+  } catch (error) {
+    return url;
+  }
+
+  return url;
+};
+
+const buildExerciseFormData = (formState) => {
+  const formData = new FormData();
+
+  formData.append('name', formState.name);
+  formData.append('description', formState.description);
+  formData.append('category', formState.category);
+  formData.append('difficulty', formState.difficulty);
+  formData.append('durationValue', formState.durationValue);
+  formData.append('durationUnit', formState.durationUnit);
+  formData.append('repetitions', formState.repetitions);
+  formData.append('bodyParts', formState.bodyParts);
+  formData.append('videoUrl', formState.videoUrl);
+  formData.append('imageUrl', formState.imageUrl);
+  formData.append('instructionFileUrl', formState.instructionFileUrl);
+  formData.append('instructions', formState.instructions);
+
+  if (formState.videoFile) {
+    formData.append('videoFile', formState.videoFile);
+  }
+
+  if (formState.imageFile) {
+    formData.append('imageFile', formState.imageFile);
+  }
+
+  if (formState.instructionFile) {
+    formData.append('instructionFile', formState.instructionFile);
+  }
+
+  return formData;
+};
 
 const ExerciseLibrary = () => {
   const { user } = useContext(AuthContext);
@@ -18,20 +99,11 @@ const ExerciseLibrary = () => {
     thisWeek: 0
   });
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newExercise, setNewExercise] = useState({
-    name: '',
-    description: '',
-    category: 'stretching',
-    difficulty: 'moderate',
-    durationValue: '',
-    durationUnit: 'minutes',
-    repetitions: '',
-    videoUrl: '',
-    imageUrl: '',
-    instructions: ''
-  });
-  const [adding, setAdding] = useState(false);
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [editingExercise, setEditingExercise] = useState(null);
+  const [exerciseForm, setExerciseForm] = useState(defaultExerciseForm);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState('');
 
   const categories = [
     { id: 'all', label: 'All Exercises', icon: '🏃' },
@@ -77,7 +149,7 @@ const ExerciseLibrary = () => {
   const fetchExercises = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/exercises');
+      const response = await exercisesAPI.getAllExercises();
       setExercises(response.data.exercises || []);
       setStats(response.data.stats || { total: 0, completed: 0, thisWeek: 0 });
     } catch (error) {
@@ -91,37 +163,71 @@ const ExerciseLibrary = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchExercises(); }, []);
 
-  const handleAddExercise = async (e) => {
+  const openCreateModal = () => {
+    setEditingExercise(null);
+    setExerciseForm(defaultExerciseForm);
+    setShowFormModal(true);
+  };
+
+  const openEditModal = (exercise) => {
+    setEditingExercise(exercise);
+    setExerciseForm({
+      name: exercise.name || '',
+      description: exercise.description || '',
+      category: exercise.category || 'stretching',
+      difficulty: exercise.difficulty || 'moderate',
+      durationValue: exercise.duration?.value ?? '',
+      durationUnit: exercise.duration?.unit || 'minutes',
+      repetitions: exercise.repetitions ?? '',
+      bodyParts: Array.isArray(exercise.bodyParts) ? exercise.bodyParts.join(', ') : '',
+      videoUrl: exercise.videoUrl || '',
+      imageUrl: exercise.imageUrl || '',
+      instructionFileUrl: exercise.instructionFileUrl || '',
+      instructions: exercise.instructions || '',
+      videoFile: null,
+      imageFile: null,
+      instructionFile: null
+    });
+    setShowFormModal(true);
+  };
+
+  const handleSaveExercise = async (e) => {
     e.preventDefault();
-    setAdding(true);
+    setSaving(true);
     try {
-      const payload = {
-        name: newExercise.name,
-        description: newExercise.description,
-        category: newExercise.category,
-        difficulty: newExercise.difficulty,
-        duration: {
-          value: Number(newExercise.durationValue),
-          unit: newExercise.durationUnit
-        },
-        repetitions: Number(newExercise.repetitions),
-        videoUrl: newExercise.videoUrl,
-        imageUrl: newExercise.imageUrl,
-        instructions: newExercise.instructions
-      };
-      
-      await physiotherapistsAPI.addExercise(payload);
+      const payload = buildExerciseFormData(exerciseForm);
+
+      if (editingExercise?._id) {
+        await exercisesAPI.updateExercise(editingExercise._id, payload);
+      } else {
+        await exercisesAPI.createExercise(payload);
+      }
+
       alert('Exercise created successfully!');
-      setShowAddModal(false);
-      setNewExercise({
-        name: '', description: '', category: 'stretching', difficulty: 'moderate',
-        durationValue: '', durationUnit: 'minutes', repetitions: '', videoUrl: '', imageUrl: '', instructions: ''
-      });
+      setShowFormModal(false);
+      setEditingExercise(null);
+      setExerciseForm(defaultExerciseForm);
       fetchExercises();
     } catch (err) {
-      alert('Error creating exercise: ' + (err.response?.data?.message || err.message));
+      alert('Error saving exercise: ' + (err.response?.data?.message || err.message));
     } finally {
-      setAdding(false);
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteExercise = async (exerciseId) => {
+    if (!window.confirm('Delete this exercise? It will be hidden from the library.')) {
+      return;
+    }
+
+    setDeletingId(exerciseId);
+    try {
+      await exercisesAPI.deleteExercise(exerciseId);
+      fetchExercises();
+    } catch (error) {
+      alert('Error deleting exercise: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setDeletingId('');
     }
   };
 
@@ -135,18 +241,26 @@ const ExerciseLibrary = () => {
   const renderExerciseCard = (exercise) => (
     <Card key={exercise._id} className="flex flex-col h-full hover:shadow-xl transition-all duration-200">
       {exercise.videoUrl ? (
-        <div className="mb-4 h-40 rounded-lg overflow-hidden relative">
-          <iframe 
-            src={exercise.videoUrl} 
-            title={exercise.name}
-            className="w-full h-full absolute inset-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-            allowFullScreen
-          ></iframe>
+        <div className="mb-4 h-40 rounded-lg overflow-hidden relative bg-slate-900">
+          {exercise.videoUrl.includes('youtube.com') || exercise.videoUrl.includes('youtu.be') ? (
+            <iframe 
+              src={getYouTubeEmbedUrl(resolveMediaUrl(exercise.videoUrl))} 
+              title={exercise.name}
+              className="w-full h-full absolute inset-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowFullScreen
+            ></iframe>
+          ) : (
+            <video
+              controls
+              className="w-full h-full object-cover"
+              src={resolveMediaUrl(exercise.videoUrl)}
+            />
+          )}
         </div>
       ) : exercise.imageUrl ? (
         <div className="mb-4 h-40 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg overflow-hidden">
-          <img src={exercise.imageUrl} alt={exercise.name} className="w-full h-full object-cover" />
+          <img src={resolveMediaUrl(exercise.imageUrl)} alt={exercise.name} className="w-full h-full object-cover" />
         </div>
       ) : (
         <div className="mb-4 h-40 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
@@ -157,6 +271,21 @@ const ExerciseLibrary = () => {
       <h3 className="text-lg font-bold text-gray-800 mb-2">{exercise.name}</h3>
       {exercise.description && (
         <p className="text-sm text-gray-600 mb-3 flex-grow">{exercise.description}</p>
+      )}
+
+      {exercise.instructions && (
+        <p className="text-xs text-gray-500 mb-2 line-clamp-2">{exercise.instructions}</p>
+      )}
+
+      {exercise.instructionFileUrl && (
+        <a
+          href={resolveMediaUrl(exercise.instructionFileUrl)}
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs font-semibold text-blue-600 hover:text-blue-500 mb-2 inline-flex"
+        >
+          View instruction file
+        </a>
       )}
 
       <div className="flex flex-wrap gap-2 mb-4">
@@ -181,14 +310,38 @@ const ExerciseLibrary = () => {
         </div>
       )}
 
-      <Button
-        variant="primary"
-        size="sm"
-        className="w-full"
-        onClick={() => handleStartExercise(exercise._id)}
-      >
-        ▶ Start Exercise
-      </Button>
+      <div className="flex gap-2 mt-auto">
+        {user?.role === 'physiotherapist' ? (
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="flex-1"
+              onClick={() => openEditModal(exercise)}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              loading={deletingId === exercise._id}
+              onClick={() => handleDeleteExercise(exercise._id)}
+            >
+              Delete
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="primary"
+            size="sm"
+            className="w-full"
+            onClick={() => handleStartExercise(exercise._id)}
+          >
+            ▶ Start Exercise
+          </Button>
+        )}
+      </div>
     </Card>
   );
 
@@ -215,7 +368,7 @@ const ExerciseLibrary = () => {
             subtitle="Browse and start your personalized rehabilitation exercises"
           />
           {user?.role === 'physiotherapist' && (
-            <Button variant="primary" onClick={() => setShowAddModal(true)}>
+            <Button variant="primary" onClick={openCreateModal}>
               + Create Exercise
             </Button>
           )}
@@ -280,27 +433,31 @@ const ExerciseLibrary = () => {
         )}
       </div>
 
-      {/* Add Exercise Modal */}
+      {/* Add/Edit Exercise Modal */}
       <Modal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        title="Create New Exercise"
+        isOpen={showFormModal}
+        onClose={() => {
+          setShowFormModal(false);
+          setEditingExercise(null);
+          setExerciseForm(defaultExerciseForm);
+        }}
+        title={editingExercise ? 'Edit Exercise' : 'Create New Exercise'}
         size="lg"
       >
-        <form onSubmit={handleAddExercise} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+        <form onSubmit={handleSaveExercise} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Exercise Name *"
-              value={newExercise.name}
-              onChange={(e) => setNewExercise({...newExercise, name: e.target.value})}
+              value={exerciseForm.name}
+              onChange={(e) => setExerciseForm({...exerciseForm, name: e.target.value})}
               required
             />
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Category *</label>
               <select 
                 className="premium-input w-full"
-                value={newExercise.category}
-                onChange={(e) => setNewExercise({...newExercise, category: e.target.value})}
+                value={exerciseForm.category}
+                onChange={(e) => setExerciseForm({...exerciseForm, category: e.target.value})}
               >
                 {categories.filter(c => c.id !== 'all').map(c => (
                   <option key={c.id} value={c.id}>{c.label}</option>
@@ -314,9 +471,16 @@ const ExerciseLibrary = () => {
           
           <Input
             label="Description *"
-            value={newExercise.description}
-            onChange={(e) => setNewExercise({...newExercise, description: e.target.value})}
+            value={exerciseForm.description}
+            onChange={(e) => setExerciseForm({...exerciseForm, description: e.target.value})}
             required
+          />
+
+          <Input
+            label="Body Parts (comma separated)"
+            value={exerciseForm.bodyParts}
+            onChange={(e) => setExerciseForm({...exerciseForm, bodyParts: e.target.value})}
+            placeholder="knee, shoulder, back"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -324,8 +488,8 @@ const ExerciseLibrary = () => {
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Difficulty *</label>
               <select 
                 className="premium-input w-full"
-                value={newExercise.difficulty}
-                onChange={(e) => setNewExercise({...newExercise, difficulty: e.target.value})}
+                value={exerciseForm.difficulty}
+                onChange={(e) => setExerciseForm({...exerciseForm, difficulty: e.target.value})}
               >
                 <option value="easy">Beginner</option>
                 <option value="moderate">Intermediate</option>
@@ -335,15 +499,15 @@ const ExerciseLibrary = () => {
             <Input
               label="Duration Value"
               type="number"
-              value={newExercise.durationValue}
-              onChange={(e) => setNewExercise({...newExercise, durationValue: e.target.value})}
+              value={exerciseForm.durationValue}
+              onChange={(e) => setExerciseForm({...exerciseForm, durationValue: e.target.value})}
             />
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Duration Unit</label>
               <select 
                 className="premium-input w-full"
-                value={newExercise.durationUnit}
-                onChange={(e) => setNewExercise({...newExercise, durationUnit: e.target.value})}
+                value={exerciseForm.durationUnit}
+                onChange={(e) => setExerciseForm({...exerciseForm, durationUnit: e.target.value})}
               >
                 <option value="minutes">Minutes</option>
                 <option value="seconds">Seconds</option>
@@ -356,25 +520,80 @@ const ExerciseLibrary = () => {
             <Input
               label="Repetitions"
               type="number"
-              value={newExercise.repetitions}
-              onChange={(e) => setNewExercise({...newExercise, repetitions: e.target.value})}
+              value={exerciseForm.repetitions}
+              onChange={(e) => setExerciseForm({...exerciseForm, repetitions: e.target.value})}
             />
             <Input
               label="Image URL"
-              value={newExercise.imageUrl}
-              onChange={(e) => setNewExercise({...newExercise, imageUrl: e.target.value})}
+              value={exerciseForm.imageUrl}
+              onChange={(e) => setExerciseForm({...exerciseForm, imageUrl: e.target.value})}
             />
           </div>
 
           <Input
-            label="Video URL (YouTube embed link)"
-            value={newExercise.videoUrl}
-            onChange={(e) => setNewExercise({...newExercise, videoUrl: e.target.value})}
+            label="Video URL (YouTube or direct link)"
+            value={exerciseForm.videoUrl}
+            onChange={(e) => setExerciseForm({...exerciseForm, videoUrl: e.target.value})}
           />
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Upload Video File</label>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => setExerciseForm({...exerciseForm, videoFile: e.target.files?.[0] || null})}
+                className="premium-input w-full py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Instruction File</label>
+              <input
+                type="file"
+                accept="application/pdf,.doc,.docx,.txt"
+                onChange={(e) => setExerciseForm({...exerciseForm, instructionFile: e.target.files?.[0] || null})}
+                className="premium-input w-full py-2"
+              />
+            </div>
+          </div>
+
+          <Input
+            label="Instruction File URL"
+            value={exerciseForm.instructionFileUrl}
+            onChange={(e) => setExerciseForm({...exerciseForm, instructionFileUrl: e.target.value})}
+            placeholder="Optional remote file link"
+          />
+
+          <Input
+            label="Instructions"
+            value={exerciseForm.instructions}
+            onChange={(e) => setExerciseForm({...exerciseForm, instructions: e.target.value})}
+          />
+
+          {editingExercise && (
+            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300 space-y-2">
+              <p className="font-semibold text-slate-100">Current attachments</p>
+              <p>Video: {editingExercise.videoUrl ? 'Present' : 'None'}</p>
+              <p>Instruction file: {editingExercise.instructionFileUrl ? 'Present' : 'None'}</p>
+              <p>Image: {editingExercise.imageUrl ? 'Present' : 'None'}</p>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-4 border-t border-slate-700/50 mt-4">
-            <Button variant="ghost" type="button" onClick={() => setShowAddModal(false)}>Cancel</Button>
-            <Button variant="primary" type="submit" loading={adding}>Save Exercise</Button>
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => {
+                setShowFormModal(false);
+                setEditingExercise(null);
+                setExerciseForm(defaultExerciseForm);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" loading={saving}>
+              {editingExercise ? 'Update Exercise' : 'Save Exercise'}
+            </Button>
           </div>
         </form>
       </Modal>

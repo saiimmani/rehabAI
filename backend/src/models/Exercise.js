@@ -32,6 +32,7 @@ const exerciseSchema = new mongoose.Schema({
   },
   imageUrl: String,
   videoUrl: String,
+  instructionFileUrl: String,
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

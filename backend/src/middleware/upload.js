@@ -17,15 +17,23 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('video/') || file.mimetype.startsWith('image/')) {
+  if (
+    file.mimetype.startsWith('video/') ||
+    file.mimetype.startsWith('image/') ||
+    file.mimetype === 'application/pdf' ||
+    file.mimetype === 'application/msword' ||
+    file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    file.mimetype === 'text/plain'
+  ) {
     cb(null, true);
   } else {
-    cb(new Error('Format not supported, please upload an image or video'), false);
+    cb(new Error('Format not supported, please upload an image, video, or document'), false);
   }
 };
 
 const upload = multer({ 
   storage: storage,
+  fileFilter,
   limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit for videos
 });
 

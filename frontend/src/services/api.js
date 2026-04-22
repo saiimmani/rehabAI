@@ -1,5 +1,14 @@
 import apiClient from './apiClient';
 
+const sendExercisePayload = (method, url, data) => {
+  const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+  const config = isFormData
+    ? { headers: { 'Content-Type': 'multipart/form-data' } }
+    : undefined;
+
+  return apiClient[method](url, data, config);
+};
+
 // Authentication API
 export const authAPI = {
   login: (email, password) => 
@@ -74,6 +83,12 @@ export const patientsAPI = {
 
 // Physiotherapist API
 export const physiotherapistsAPI = {
+  getAllPatients: () => 
+    apiClient.get('/mentor/all-patients'),
+  
+  assignPatient: (data) => 
+    apiClient.post('/mentor/assign-patient', data),
+
   getPatients: () => 
     apiClient.get('/mentor/patients'),
   
@@ -168,10 +183,10 @@ export const exercisesAPI = {
     apiClient.get(`/exercises/${id}`),
   
   createExercise: (exerciseData) => 
-    apiClient.post('/exercises', exerciseData),
+    sendExercisePayload('post', '/exercises', exerciseData),
   
   updateExercise: (id, data) => 
-    apiClient.put(`/exercises/${id}`, data),
+    sendExercisePayload('put', `/exercises/${id}`, data),
   
   deleteExercise: (id) => 
     apiClient.delete(`/exercises/${id}`),

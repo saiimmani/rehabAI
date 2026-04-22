@@ -8,7 +8,7 @@ exports.getAllExercises = async (req, res) => {
     
     // Get all exercises
     const exercises = await Exercise.find({ isActive: true })
-      .select('_id name description category bodyParts instructions duration repetitions difficulty isActive')
+      .select('_id name description category bodyParts instructions instructionFileUrl duration repetitions difficulty imageUrl videoUrl isActive')
       .lean();
     
     // Get user's exercise stats
@@ -106,29 +106,69 @@ exports.getExercisesByBodyPart = async (req, res) => {
 // Create new exercise (admin/doctor only)
 exports.createExercise = async (req, res) => {
   try {
-    const { name, description, category, bodyParts, instructions, duration, repetitions, difficulty, imageUrl } = req.body;
-    let { videoUrl } = req.body;
-
-    if (!name || !category) {
-      return res.status(400).json({ success: false, message: 'Name and category are required' });
-    }
-
-    if (req.file) {
-      videoUrl = `/uploads/${req.file.filename}`;
-    }
-
-    const exercise = new Exercise({
+    const {
       name,
       description,
       category,
       bodyParts,
       instructions,
       duration,
+      durationValue,
+      durationUnit,
       repetitions,
       difficulty,
       imageUrl,
       videoUrl,
-      createdBy: req.user.id
+      instructionFileUrl
+    } = req.body;
+
+    const files = req.files || {};
+    let resolvedVideoUrl = videoUrl;
+    let resolvedInstructionFileUrl = instructionFileUrl;
+    let resolvedImageUrl = imageUrl;
+
+    if (!name || !category) {
+      return res.status(400).json({ success: false, message: 'Name and category are required' });
+    }
+
+    if (files.videoFile?.[0]) {
+      resolvedVideoUrl = `/uploads/${files.videoFile[0].filename}`;
+    }
+
+    if (files.instructionFile?.[0]) {
+      resolvedInstructionFileUrl = `/uploads/${files.instructionFile[0].filename}`;
+    }
+
+    if (files.imageFile?.[0]) {
+      resolvedImageUrl = `/uploads/${files.imageFile[0].filename}`;
+    }
+
+    const parsedDuration = duration && typeof duration === 'object'
+      ? duration
+      : {
+          value: durationValue ? Number(durationValue) : undefined,
+          unit: durationUnit || 'minutes'
+        };
+
+    const parsedBodyParts = Array.isArray(bodyParts)
+      ? bodyParts
+      : typeof bodyParts === 'string' && bodyParts.trim()
+        ? bodyParts.split(',').map((part) => part.trim()).filter(Boolean)
+        : [];
+
+    const exercise = new Exercise({
+      name,
+      description,
+      category,
+      bodyParts: parsedBodyParts,
+      instructions,
+      instructionFileUrl: resolvedInstructionFileUrl,
+      duration: parsedDuration,
+      repetitions: repetitions !== undefined && repetitions !== '' ? Number(repetitions) : undefined,
+      difficulty,
+      imageUrl: resolvedImageUrl,
+      videoUrl: resolvedVideoUrl,
+      createdBy: req.user.userId || req.user.id
     });
 
     await exercise.save();
@@ -143,7 +183,38 @@ exports.createExercise = async (req, res) => {
 exports.updateExercise = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates = { ...req.body };
+
+    const files = req.files || {};
+
+    if (files.videoFile?.[0]) {
+      updates.videoUrl = `/uploads/${files.videoFile[0].filename}`;
+    }
+
+    if (files.instructionFile?.[0]) {
+      updates.instructionFileUrl = `/uploads/${files.instructionFile[0].filename}`;
+    }
+
+    if (files.imageFile?.[0]) {
+      updates.imageUrl = `/uploads/${files.imageFile[0].filename}`;
+    }
+
+    if (updates.bodyParts && typeof updates.bodyParts === 'string') {
+      updates.bodyParts = updates.bodyParts.split(',').map((part) => part.trim()).filter(Boolean);
+    }
+
+    if (updates.durationValue || updates.durationUnit) {
+      updates.duration = {
+        value: updates.durationValue ? Number(updates.durationValue) : undefined,
+        unit: updates.durationUnit || 'minutes'
+      };
+      delete updates.durationValue;
+      delete updates.durationUnit;
+    }
+
+    if (updates.repetitions !== undefined && updates.repetitions !== '') {
+      updates.repetitions = Number(updates.repetitions);
+    }
 
     const exercise = await Exercise.findByIdAndUpdate(
       id,

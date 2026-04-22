@@ -10,6 +10,13 @@ const {
   updateExercise,
   deleteExercise
 } = require('../controllers/exercisesController');
+const upload = require('../middleware/upload');
+
+const exerciseUpload = upload.fields([
+  { name: 'videoFile', maxCount: 1 },
+  { name: 'instructionFile', maxCount: 1 },
+  { name: 'imageFile', maxCount: 1 }
+]);
 
 // GET /api/exercises - Get all exercises
 router.get('/', authMiddleware, getAllExercises);
@@ -23,13 +30,11 @@ router.get('/bodypart/:bodyPart', authMiddleware, getExercisesByBodyPart);
 // GET /api/exercises/:id - Get exercise details
 router.get('/:id', authMiddleware, getExerciseById);
 
-const upload = require('../middleware/upload');
-
 // POST /api/exercises - Create new exercise
-router.post('/', authMiddleware, roleMiddleware('physiotherapist', 'doctor'), upload.single('video'), createExercise);
+router.post('/', authMiddleware, roleMiddleware('physiotherapist', 'doctor'), exerciseUpload, createExercise);
 
 // PUT /api/exercises/:id - Update exercise
-router.put('/:id', authMiddleware, roleMiddleware('physiotherapist', 'doctor'), upload.single('video'), updateExercise);
+router.put('/:id', authMiddleware, roleMiddleware('physiotherapist', 'doctor'), exerciseUpload, updateExercise);
 
 // DELETE /api/exercises/:id - Delete exercise
 router.delete('/:id', authMiddleware, roleMiddleware('physiotherapist', 'doctor'), deleteExercise);
