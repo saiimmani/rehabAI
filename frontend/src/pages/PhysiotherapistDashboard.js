@@ -11,11 +11,14 @@ const PhysiotherapistDashboard = () => {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('patients');
   const [assignedPatients, setAssignedPatients] = useState([]);
+  const [availablePatients, setAvailablePatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
+  const [showAssignPatientModal, setShowAssignPatientModal] = useState(false);
   const [exercises, setExercises] = useState([]);
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
+  const [selectedPatientToAssign, setSelectedPatientToAssign] = useState('');
   const [sending, setSending] = useState(false);
 
   // Socket for emergency alerts
@@ -37,12 +40,21 @@ const PhysiotherapistDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [patientsRes, exercisesRes] = await Promise.all([
+      const [patientsRes, allPatientsRes, exercisesRes] = await Promise.all([
         physiotherapistsAPI.getPatients(),
+        physiotherapistsAPI.getAllPatients(),
         exercisesAPI.getAllExercises()
       ]);
-      
-      setAssignedPatients(patientsRes.data.patients || []);
+
+      const assigned = patientsRes.data.patients || [];
+      const available = allPatientsRes.data.patients || [];
+
+      const unassignedPatients = available.filter(
+        p => !assigned.some(ap => ap.patientId?._id === p._id)
+      );
+
+      setAssignedPatients(assigned);
+      setAvailablePatients(unassignedPatients);
       setExercises(exercisesRes.data.exercises || []);
       setLoading(false);
     } catch (error) {
@@ -75,6 +87,26 @@ const PhysiotherapistDashboard = () => {
     }
   };
 
+  const handleAssignPatient = async () => {
+    if (!selectedPatientToAssign) {
+      alert('Please select a patient');
+      return;
+    }
+
+    setSending(true);
+    try {
+      await physiotherapistsAPI.assignPatient({ patientId: selectedPatientToAssign });
+      alert('Patient assigned successfully!');
+      setShowAssignPatientModal(false);
+      setSelectedPatientToAssign('');
+      fetchData();
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (loading) return <div className="min-h-screen"><Navbar /><div className="p-6"><Skeleton count={3} /></div></div>;
 
   const tabs = [
@@ -83,6 +115,7 @@ const PhysiotherapistDashboard = () => {
 
   const stats = [
     { label: 'Assigned Patients', value: assignedPatients.length },
+    { label: 'Unassigned Patients', value: availablePatients.length },
     { label: 'Available Exercises', value: exercises.length },
     { label: 'Dashboard Mode', value: 'Physiotherapist' }
   ];
@@ -91,12 +124,12 @@ const PhysiotherapistDashboard = () => {
     <div className="min-h-screen relative">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
       <Navbar />
-      
+
       {/* Emergency Alerts Overlay */}
       {emergencyAlerts.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 mt-4 space-y-2 z-50 relative">
           {emergencyAlerts.map((alert, idx) => (
-            <Alert 
+            <Alert
               key={idx}
               variant="danger"
               title={`⚠️ CRITICAL: Patient ${alert.patientName} (Pain Level: ${alert.painLevel}/10)`}
@@ -108,7 +141,7 @@ const PhysiotherapistDashboard = () => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 py-8 relative z-10">
-        <PageHeader 
+        <PageHeader
           title={`Dr. ${user?.lastName || user?.firstName}'s Dashboard`}
           subtitle="Manage your assigned patients and their recovery plans"
         />
@@ -123,8 +156,16 @@ const PhysiotherapistDashboard = () => {
               <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                 <span>👥</span> My Assigned Patients
               </h2>
+              {availablePatients.length > 0 && (
+                <Button
+                  variant="primary"
+                  onClick={() => setShowAssignPatientModal(true)}
+                >
+                  + Assign Patient
+                </Button>
+              )}
             </div>
-            
+
             {assignedPatients.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {assignedPatients.map((patient) => (
@@ -156,7 +197,7 @@ const PhysiotherapistDashboard = () => {
                         <p className="text-sm text-slate-200 line-clamp-2" title={patient.rehabilitationPlan}>{patient.rehabilitationPlan}</p>
                       </div>
                     )}
-                    
+
                     <div className="flex gap-2 mt-4">
                       <Button
                         variant="primary"
@@ -182,10 +223,10 @@ const PhysiotherapistDashboard = () => {
                 ))}
               </div>
             ) : (
-              <EmptyState 
+              <EmptyState
                 icon="👥"
                 title="No patients assigned yet"
-                description="New patients will appear here automatically when assigned."
+                description={availablePatients.length > 0 ? 'Assign patients to get started' : 'No unassigned patients available'}
               />
             )}
           </div>
@@ -222,8 +263,8 @@ const PhysiotherapistDashboard = () => {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => {
                 setShowExerciseModal(false);
@@ -233,12 +274,62 @@ const PhysiotherapistDashboard = () => {
             >
               Cancel
             </Button>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               type="submit"
               loading={sending}
             >
               Assign Exercise
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Assign Patient Modal */}
+      <Modal
+        isOpen={showAssignPatientModal}
+        onClose={() => {
+          setShowAssignPatientModal(false);
+          setSelectedPatientToAssign('');
+        }}
+        title="👥 Assign Patient"
+        size="md"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); handleAssignPatient(); }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Select Unassigned Patient *</label>
+            <select
+              value={selectedPatientToAssign}
+              onChange={(e) => setSelectedPatientToAssign(e.target.value)}
+              className="premium-input px-3 py-2 bg-slate-800"
+              required
+            >
+              <option value="">-- Select a patient --</option>
+              {availablePatients.map((patient) => (
+                <option key={patient._id} value={patient._id}>
+                  {patient.firstName} {patient.lastName} ({patient.email})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-slate-700/50 mt-4">
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => {
+                setShowAssignPatientModal(false);
+                setSelectedPatientToAssign('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              loading={sending}
+            >
+              Assign Patient
             </Button>
           </div>
         </form>

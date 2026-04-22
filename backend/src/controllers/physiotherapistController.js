@@ -1,5 +1,104 @@
 const { User, PatientProfile, Exercise, ExerciseSession, ExerciseLog } = require('../models');
 
+// @route   GET /api/mentor/all-patients
+// @desc    Get all patients in system (for connection)
+// @access  Private (Physiotherapist)
+exports.getAllPatients = async (req, res) => {
+  try {
+    const physiotherapistId = req.user.userId;
+
+    const assignedProfiles = await PatientProfile.find({
+      assignedPhysiotherapist: { $ne: null }
+    }).select('patientId assignedPhysiotherapist');
+
+    const assignedToOthersPatientIds = assignedProfiles
+      .filter(
+        (profile) =>
+          profile.assignedPhysiotherapist &&
+          profile.assignedPhysiotherapist.toString() !== physiotherapistId
+      )
+      .map((profile) => profile.patientId);
+
+    const allPatients = await User.find({
+      role: 'patient',
+      _id: { $nin: assignedToOthersPatientIds }
+    })
+      .select('_id firstName lastName email phone age uniqueId')
+      .sort({ firstName: 1 });
+
+    if (!allPatients || allPatients.length === 0) {
+      return res.status(200).json({ 
+        message: 'No patients available',
+        patients: [] 
+      });
+    }
+
+    res.status(200).json({ 
+      message: `Found ${allPatients.length} patient(s)`,
+      patients: allPatients
+    });
+  } catch (error) {
+    console.error('Get all patients error:', error);
+    res.status(500).json({ message: 'Server error fetching patients', error: error.message });
+  }
+};
+
+// @route   POST /api/mentor/assign-patient
+// @desc    Directly assign patient to physiotherapist
+// @access  Private (Physiotherapist)
+exports.assignPatient = async (req, res) => {
+  try {
+    const physiotherapistId = req.user.userId;
+    const { patientId } = req.body;
+
+    if (!patientId) {
+      return res.status(400).json({ message: 'Patient ID is required' });
+    }
+
+    const patientUser = await User.findById(patientId);
+    if (!patientUser || patientUser.role !== 'patient') {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+
+    const physioUser = await User.findById(physiotherapistId);
+    if (!physioUser || physioUser.role !== 'physiotherapist') {
+      return res.status(403).json({ message: 'You are not authorized as a physiotherapist' });
+    }
+
+    let patientProfile = await PatientProfile.findOne({ patientId });
+    
+    if (!patientProfile) {
+      patientProfile = await PatientProfile.create({
+        patientId,
+        assignedPhysiotherapist: physiotherapistId
+      });
+    } else {
+      const currentlyAssignedPhysioId = patientProfile.assignedPhysiotherapist
+        ? patientProfile.assignedPhysiotherapist.toString()
+        : null;
+
+      if (currentlyAssignedPhysioId && currentlyAssignedPhysioId !== physiotherapistId) {
+        return res.status(409).json({
+          message: 'Patient is already assigned to another physiotherapist'
+        });
+      }
+
+      patientProfile.assignedPhysiotherapist = physiotherapistId;
+      await patientProfile.save();
+    }
+
+    await patientProfile.populate('patientId', 'firstName lastName email phone age');
+
+    res.status(200).json({
+      message: 'Patient assigned successfully',
+      patientProfile
+    });
+  } catch (error) {
+    console.error('Assign patient error:', error);
+    res.status(500).json({ message: 'Server error assigning patient', error: error.message });
+  }
+};
+
 // @route   GET /api/mentor/patients
 // @desc    Get all patients assigned to physiotherapist
 // @access  Private (Physiotherapist)
