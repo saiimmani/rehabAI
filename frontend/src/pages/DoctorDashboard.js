@@ -13,7 +13,6 @@ const DoctorDashboard = () => {
   const [assignedPatients, setAssignedPatients] = useState([]);
   const [availablePatients, setAvailablePatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
-  const [professionalId, setProfessionalId] = useState(null);
   const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -70,7 +69,6 @@ const DoctorDashboard = () => {
       setExercises(exercisesRes.data.exercises || []);
       if (appointmentsRes.data.appointments) {
         setAppointments(appointmentsRes.data.appointments);
-        setProfessionalId(appointmentsRes.data.professionalId);
       }
       setLoading(false);
     } catch (error) {

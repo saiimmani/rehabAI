@@ -21,7 +21,6 @@ const PhysiotherapistDashboard = () => {
   const [selectedPatientToAssign, setSelectedPatientToAssign] = useState('');
   const [sending, setSending] = useState(false);
   const [appointments, setAppointments] = useState([]);
-  const [professionalId, setProfessionalId] = useState('');
 
   // Socket for emergency alerts
   const { socket } = useContext(SocketContext);
@@ -61,7 +60,6 @@ const PhysiotherapistDashboard = () => {
       setExercises(exercisesRes.data.exercises || []);
       if (appointmentsRes.data.appointments) {
         setAppointments(appointmentsRes.data.appointments);
-        setProfessionalId(appointmentsRes.data.professionalId);
       }
       setLoading(false);
     } catch (error) {
