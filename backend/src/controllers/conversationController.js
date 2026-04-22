@@ -49,10 +49,11 @@ exports.getContacts = async (req, res) => {
 
       contacts = [...fromProfiles, ...fromRequests];
     } else if (userRole === 'patient') {
-      // Method 1: Check PatientProfile for assigned doctor
+      // Method 1: Check PatientProfile for assigned doctor and physiotherapist
       const profile = await PatientProfile.findOne({ patientId: userId })
         .populate('assignedDoctor', 'firstName lastName email profileImage role specialization')
-        .populate('assignedDoctorId', 'firstName lastName email profileImage role specialization');
+        .populate('assignedDoctorId', 'firstName lastName email profileImage role specialization')
+        .populate('assignedPhysiotherapist', 'firstName lastName email profileImage role specialization');
 
       if (profile) {
         // Add assigned doctor
@@ -66,6 +67,20 @@ exports.getContacts = async (req, res) => {
             profileImage: doctor.profileImage,
             role: doctor.role || 'doctor',
             specialization: doctor.specialization
+          });
+        }
+
+        // Add assigned physiotherapist
+        const physio = profile.assignedPhysiotherapist;
+        if (physio && physio._id) {
+          contacts.push({
+            _id: physio._id,
+            firstName: physio.firstName,
+            lastName: physio.lastName,
+            email: physio.email,
+            profileImage: physio.profileImage,
+            role: physio.role || 'physiotherapist',
+            specialization: physio.specialization
           });
         }
 

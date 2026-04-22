@@ -17,6 +17,7 @@ const PatientDashboard = () => {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('overview');
   const [assignedDoctor, setAssignedDoctor] = useState(null);
+  const [assignedPhysiotherapist, setAssignedPhysiotherapist] = useState(null);
   const [assignedExercises, setAssignedExercises] = useState([]);
   const [dietPlans, setDietPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +40,7 @@ const PatientDashboard = () => {
       ]);
       
       setAssignedDoctor(doctorRes.data.doctor);
+      setAssignedPhysiotherapist(doctorRes.data.physiotherapist || null);
       setAssignedExercises(exercisesRes.data.exercises || []);
       setDietPlans(dietsRes.data.dietPlans || []);
       setLoading(false);
@@ -97,7 +99,7 @@ const PatientDashboard = () => {
     : 0;
 
   const stats = [
-    { label: 'Assigned Doctor', value: assignedDoctor ? `Dr. ${assignedDoctor.lastName}` : 'Awaiting Assignment' },
+    { label: 'Assigned Professional', value: assignedDoctor ? `Dr. ${assignedDoctor.lastName}` : (assignedPhysiotherapist ? `${assignedPhysiotherapist.firstName} ${assignedPhysiotherapist.lastName}` : 'Awaiting Assignment') },
     { label: 'Total Exercises', value: assignedExercises.length },
     { label: 'Completed', value: completedCount },
     { label: 'Progress', value: `${progressPercentage}%` }
@@ -194,29 +196,42 @@ const PatientDashboard = () => {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Assigned Doctor Card */}
+            {/* Assigned Professional Card */}
             <Card className="bg-gradient-to-br from-indigo-900/40 to-slate-800/80 border-indigo-500/20">
               <h2 className="text-xl font-bold text-indigo-300 mb-4 flex items-center gap-2">
                 <span>👨‍⚕️</span> Your Medical Professional
               </h2>
-              {assignedDoctor ? (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold text-slate-100 mb-2">
-                      Dr. {assignedDoctor.firstName} {assignedDoctor.lastName}
-                    </h3>
-                    <p className="text-slate-400 mb-1">{assignedDoctor.email}</p>
-                    <p className="text-slate-400">{assignedDoctor.phone}</p>
-                  </div>
+              {assignedDoctor || assignedPhysiotherapist ? (
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  {assignedDoctor && (
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1 block">Doctor</span>
+                      <h3 className="text-2xl font-bold text-slate-100 mb-2">
+                        Dr. {assignedDoctor.firstName} {assignedDoctor.lastName}
+                      </h3>
+                      <p className="text-slate-400 mb-1">{assignedDoctor.email}</p>
+                      <p className="text-slate-400">{assignedDoctor.phone}</p>
+                    </div>
+                  )}
+                  {assignedPhysiotherapist && (
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1 block">Physiotherapist</span>
+                      <h3 className="text-2xl font-bold text-slate-100 mb-2">
+                        {assignedPhysiotherapist.firstName} {assignedPhysiotherapist.lastName}
+                      </h3>
+                      <p className="text-slate-400 mb-1">{assignedPhysiotherapist.email}</p>
+                      <p className="text-slate-400">{assignedPhysiotherapist.phone}</p>
+                    </div>
+                  )}
                   <Button variant="primary" onClick={() => navigate('/doctor-patient-chat')}>
-                    📧 Contact Doctor
+                    📧 Contact Professional
                   </Button>
                 </div>
               ) : (
                 <EmptyState 
                   icon="👨‍⚕️"
-                  title="No doctor assigned yet"
-                  description="Your assigned doctor will appear here once they connect with you"
+                  title="No professional assigned yet"
+                  description="Your assigned doctor or physiotherapist will appear here once they connect with you"
                 />
               )}
             </Card>

@@ -1,4 +1,4 @@
-const { User, PatientProfile, Exercise, ExerciseSession, ExerciseLog } = require('../models');
+const { User, PatientProfile, Exercise, ExerciseSession, ExerciseLog, AssignedExercise } = require('../models');
 
 // @route   GET /api/mentor/all-patients
 // @desc    Get all patients in system (for connection)
@@ -162,7 +162,7 @@ exports.addExercise = async (req, res) => {
 exports.assignExercise = async (req, res) => {
   try {
     const physiotherapistId = req.user.userId;
-    const { patientId, exerciseId } = req.body;
+    const { patientId, exerciseId, notes, frequency, sets, reps, duration } = req.body;
 
     // Validate input
     if (!patientId || !exerciseId) {
@@ -185,18 +185,34 @@ exports.assignExercise = async (req, res) => {
       return res.status(404).json({ message: 'Exercise not found' });
     }
 
-    // Create exercise session
-    const session = await ExerciseSession.create({
-      patient: patientId,
-      exercise: exerciseId,
-      physiotherapist: physiotherapistId,
-      sessionDate: new Date(),
-      completionStatus: 'pending'
+    // Check if exercise is already assigned
+    const existingAssignment = await AssignedExercise.findOne({
+      patientId,
+      exerciseId,
+      status: { $ne: 'completed' }
+    });
+
+    if (existingAssignment) {
+      return res.status(400).json({ message: 'This exercise is already assigned to the patient' });
+    }
+
+    // Create AssignedExercise instead of ExerciseSession
+    const session = await AssignedExercise.create({
+      patientId,
+      exerciseId,
+      doctorId: physiotherapistId, // Both doctors and physios use doctorId for assigned by
+      notes: notes || '',
+      frequency: frequency || 'daily',
+      sets: sets || 1,
+      reps: reps || null,
+      duration: duration || null,
+      assignedDate: new Date(),
+      status: 'pending'
     });
 
     res.status(201).json({
       message: 'Exercise assigned successfully',
-      session: await session.populate('exercise patient', 'name firstName lastName')
+      session: await session.populate('exerciseId patientId', 'name firstName lastName')
     });
   } catch (error) {
     console.error('Assign exercise error:', error);

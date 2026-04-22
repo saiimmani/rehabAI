@@ -299,29 +299,32 @@ exports.rejectRequest = async (req, res) => {
 };
 
 // @route   GET /api/patient/assigned-doctor
-// @desc    Get the doctor assigned to this patient
+// @desc    Get the doctor and physiotherapist assigned to this patient
 // @access  Private (Patient)
 exports.getAssignedDoctor = async (req, res) => {
   try {
     const patientId = req.user.userId;
 
     const patientProfile = await PatientProfile.findOne({ patientId })
-      .populate('assignedDoctor', 'firstName lastName email phone specialization _id');
+      .populate('assignedDoctor', 'firstName lastName email phone specialization _id')
+      .populate('assignedPhysiotherapist', 'firstName lastName email phone specialization _id');
 
-    if (!patientProfile || !patientProfile.assignedDoctor) {
+    if (!patientProfile || (!patientProfile.assignedDoctor && !patientProfile.assignedPhysiotherapist)) {
       return res.status(200).json({
-        message: 'No doctor assigned yet',
-        doctor: null
+        message: 'No professional assigned yet',
+        doctor: null,
+        physiotherapist: null
       });
     }
 
     res.status(200).json({
-      message: 'Assigned doctor retrieved successfully',
-      doctor: patientProfile.assignedDoctor
+      message: 'Assigned professionals retrieved successfully',
+      doctor: patientProfile.assignedDoctor || null,
+      physiotherapist: patientProfile.assignedPhysiotherapist || null
     });
   } catch (error) {
-    console.error('Get assigned doctor error:', error);
-    res.status(500).json({ message: 'Server error fetching assigned doctor', error: error.message });
+    console.error('Get assigned professionals error:', error);
+    res.status(500).json({ message: 'Server error fetching assigned professionals', error: error.message });
   }
 };
 
