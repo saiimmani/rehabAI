@@ -5,26 +5,7 @@ const { User, PatientProfile, Exercise, ExerciseSession, ExerciseLog } = require
 // @access  Private (Physiotherapist)
 exports.getAllPatients = async (req, res) => {
   try {
-    const physiotherapistId = req.user.userId;
-
-    const assignedProfiles = await PatientProfile.find({
-      assignedPhysiotherapist: { $ne: null }
-    }).select('patientId assignedPhysiotherapist');
-
-    const assignedToOthersPatientIds = assignedProfiles
-      .filter(
-        (profile) =>
-          profile.assignedPhysiotherapist &&
-          profile.assignedPhysiotherapist.toString() !== physiotherapistId.toString()
-      )
-      .map((profile) => profile.patientId);
-
-    console.log(`Physiotherapist ${physiotherapistId}: Found ${assignedToOthersPatientIds.length} patients assigned to others`);
-
-    const allPatients = await User.find({
-      role: 'patient',
-      _id: { $nin: assignedToOthersPatientIds }
-    })
+    const allPatients = await User.find({ role: 'patient' })
       .select('_id firstName lastName email phone age uniqueId')
       .sort({ firstName: 1 });
 

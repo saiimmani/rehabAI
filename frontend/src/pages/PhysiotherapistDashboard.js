@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Navbar, PageHeader, TabBar } from '../components/Layout';
 import { Card, Button, StatsGrid, EmptyState, Skeleton, Modal, Alert } from '../components/UIComponents';
-import { physiotherapistsAPI, exercisesAPI } from '../services/api';
+import { physiotherapistsAPI, exercisesAPI, patientsAPI } from '../services/api';
 import { SocketContext } from '../context/SocketContext';
 
 const PhysiotherapistDashboard = () => {
@@ -42,7 +42,7 @@ const PhysiotherapistDashboard = () => {
     try {
       const [patientsRes, allPatientsRes, exercisesRes] = await Promise.all([
         physiotherapistsAPI.getPatients(),
-        physiotherapistsAPI.getAllPatients(),
+        patientsAPI.getAllPatients(),
         exercisesAPI.getAllExercises()
       ]);
 
