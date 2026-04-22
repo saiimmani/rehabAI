@@ -7,20 +7,30 @@ exports.getAllPatients = async (req, res) => {
   try {
     const blockedProfiles = await PatientProfile.find({
       $or: [
-        { assignedDoctor: { $ne: null } },
-        { assignedDoctorId: { $ne: null } },
-        { assignedPhysiotherapist: { $ne: null } }
+        { assignedDoctor: { $exists: true, $ne: null } },
+        { assignedDoctorId: { $exists: true, $ne: null } },
+        { assignedPhysiotherapist: { $exists: true, $ne: null } }
       ]
-    }).select('patientId');
+    })
+      .select('patientId')
+      .lean();
 
-    const blockedPatientIds = blockedProfiles.map((profile) => profile.patientId);
+    const blockedPatientIds = new Set(
+      blockedProfiles
+        .filter((profile) => profile.patientId)
+        .map((profile) => profile.patientId.toString())
+    );
 
     const allPatients = await User.find({ role: 'patient' })
-      .where('_id').nin(blockedPatientIds)
       .select('_id firstName lastName email phone age uniqueId')
-      .sort({ firstName: 1 });
+      .sort({ firstName: 1 })
+      .lean();
 
-    if (!allPatients || allPatients.length === 0) {
+    const availablePatients = allPatients.filter(
+      (patient) => !blockedPatientIds.has(patient._id.toString())
+    );
+
+    if (!availablePatients || availablePatients.length === 0) {
       return res.status(200).json({ 
         message: 'No patients available',
         patients: [] 
@@ -28,8 +38,8 @@ exports.getAllPatients = async (req, res) => {
     }
 
     res.status(200).json({ 
-      message: `Found ${allPatients.length} patient(s)`,
-      patients: allPatients
+      message: `Found ${availablePatients.length} patient(s)`,
+      patients: availablePatients
     });
   } catch (error) {
     console.error('Get all patients error:', error);
