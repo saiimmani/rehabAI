@@ -45,7 +45,7 @@ export default function PhysiotherapistDashboard() {
     setSending(true);
     try {
       await physiotherapistsAPI.assignExercise({
-        patientId: selectedPatient.patientId._id,
+        patientId: selectedPatient.patientId?._id,
         exerciseId: selectedExerciseId
       });
       alert('Exercise assigned successfully!');
@@ -158,13 +158,13 @@ export default function PhysiotherapistDashboard() {
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs">
-                            {patient.patientId.firstName[0]}{patient.patientId.lastName[0]}
+                            {patient.patientId?.firstName?.[0] || '?'}{patient.patientId?.lastName?.[0] || '?'}
                           </div>
                           <div>
                             <p className="font-bold text-slate-100 text-sm">
-                              {patient.patientId.firstName} {patient.patientId.lastName}
+                              {patient.patientId?.firstName || 'Unknown'} {patient.patientId?.lastName || 'Patient'}
                             </p>
-                            <p className="text-[10px] text-slate-500 font-medium">{patient.patientId.email}</p>
+                            <p className="text-[10px] text-slate-500 font-medium">{patient.patientId?.email || 'No email'}</p>
                           </div>
                         </div>
                       </td>
@@ -189,7 +189,7 @@ export default function PhysiotherapistDashboard() {
                           <span className="text-sm">+</span> Assign
                         </button>
                         <button
-                          onClick={() => navigate(`/mentor/patient/${patient.patientId._id}/progress`)}
+                          onClick={() => navigate(`/mentor/patient/${patient.patientId?._id}/progress`)}
                           className="text-indigo-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-colors flex items-center gap-2 group/btn"
                         >
                           View Progress 

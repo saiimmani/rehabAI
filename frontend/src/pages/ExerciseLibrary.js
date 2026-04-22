@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import { physiotherapistsAPI } from '../services/api';
 import { Navbar, PageHeader } from '../components/Layout';
-import { Card, Button, Badge, Input, Skeleton, EmptyState } from '../components/UIComponents';
+import { Card, Button, Badge, Input, Skeleton, EmptyState, Modal } from '../components/UIComponents';
 import apiClient from '../services/apiClient';
 
 const ExerciseLibrary = () => {
+  const { user } = useContext(AuthContext);
   const [exercises, setExercises] = useState([]);
   const [filteredExercises, setFilteredExercises] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +17,21 @@ const ExerciseLibrary = () => {
     completed: 0,
     thisWeek: 0
   });
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newExercise, setNewExercise] = useState({
+    name: '',
+    description: '',
+    category: 'stretching',
+    difficulty: 'moderate',
+    durationValue: '',
+    durationUnit: 'minutes',
+    repetitions: '',
+    videoUrl: '',
+    imageUrl: '',
+    instructions: ''
+  });
+  const [adding, setAdding] = useState(false);
 
   const categories = [
     { id: 'all', label: 'All Exercises', icon: '🏃' },
@@ -39,8 +57,8 @@ const ExerciseLibrary = () => {
     let filtered = exercises;
     if (searchQuery) {
       filtered = filtered.filter(ex =>
-        ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ex.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        ex.name?.toLowerCase()?.includes(searchQuery.toLowerCase()) ||
+        ex.description?.toLowerCase()?.includes(searchQuery.toLowerCase())
       );
     }
     if (selectedCategory !== 'all') {
@@ -72,6 +90,40 @@ const ExerciseLibrary = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchExercises(); }, []);
+
+  const handleAddExercise = async (e) => {
+    e.preventDefault();
+    setAdding(true);
+    try {
+      const payload = {
+        name: newExercise.name,
+        description: newExercise.description,
+        category: newExercise.category,
+        difficulty: newExercise.difficulty,
+        duration: {
+          value: Number(newExercise.durationValue),
+          unit: newExercise.durationUnit
+        },
+        repetitions: Number(newExercise.repetitions),
+        videoUrl: newExercise.videoUrl,
+        imageUrl: newExercise.imageUrl,
+        instructions: newExercise.instructions
+      };
+      
+      await physiotherapistsAPI.addExercise(payload);
+      alert('Exercise created successfully!');
+      setShowAddModal(false);
+      setNewExercise({
+        name: '', description: '', category: 'stretching', difficulty: 'moderate',
+        durationValue: '', durationUnit: 'minutes', repetitions: '', videoUrl: '', imageUrl: '', instructions: ''
+      });
+      fetchExercises();
+    } catch (err) {
+      alert('Error creating exercise: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setAdding(false);
+    }
+  };
 
 
 
@@ -157,10 +209,17 @@ const ExerciseLibrary = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <PageHeader
-          title="Exercise Library"
-          subtitle="Browse and start your personalized rehabilitation exercises"
-        />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <PageHeader
+            title="Exercise Library"
+            subtitle="Browse and start your personalized rehabilitation exercises"
+          />
+          {user?.role === 'physiotherapist' && (
+            <Button variant="primary" onClick={() => setShowAddModal(true)}>
+              + Create Exercise
+            </Button>
+          )}
+        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-4 mb-8">
@@ -220,6 +279,105 @@ const ExerciseLibrary = () => {
           />
         )}
       </div>
+
+      {/* Add Exercise Modal */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title="Create New Exercise"
+        size="lg"
+      >
+        <form onSubmit={handleAddExercise} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Exercise Name *"
+              value={newExercise.name}
+              onChange={(e) => setNewExercise({...newExercise, name: e.target.value})}
+              required
+            />
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Category *</label>
+              <select 
+                className="premium-input w-full"
+                value={newExercise.category}
+                onChange={(e) => setNewExercise({...newExercise, category: e.target.value})}
+              >
+                {categories.filter(c => c.id !== 'all').map(c => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+                <option value="stretching">Stretching</option>
+                <option value="strengthening">Strengthening</option>
+                <option value="balance">Balance</option>
+              </select>
+            </div>
+          </div>
+          
+          <Input
+            label="Description *"
+            value={newExercise.description}
+            onChange={(e) => setNewExercise({...newExercise, description: e.target.value})}
+            required
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Difficulty *</label>
+              <select 
+                className="premium-input w-full"
+                value={newExercise.difficulty}
+                onChange={(e) => setNewExercise({...newExercise, difficulty: e.target.value})}
+              >
+                <option value="easy">Beginner</option>
+                <option value="moderate">Intermediate</option>
+                <option value="hard">Advanced</option>
+              </select>
+            </div>
+            <Input
+              label="Duration Value"
+              type="number"
+              value={newExercise.durationValue}
+              onChange={(e) => setNewExercise({...newExercise, durationValue: e.target.value})}
+            />
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Duration Unit</label>
+              <select 
+                className="premium-input w-full"
+                value={newExercise.durationUnit}
+                onChange={(e) => setNewExercise({...newExercise, durationUnit: e.target.value})}
+              >
+                <option value="minutes">Minutes</option>
+                <option value="seconds">Seconds</option>
+                <option value="reps">Reps</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Repetitions"
+              type="number"
+              value={newExercise.repetitions}
+              onChange={(e) => setNewExercise({...newExercise, repetitions: e.target.value})}
+            />
+            <Input
+              label="Image URL"
+              value={newExercise.imageUrl}
+              onChange={(e) => setNewExercise({...newExercise, imageUrl: e.target.value})}
+            />
+          </div>
+
+          <Input
+            label="Video URL (YouTube embed link)"
+            value={newExercise.videoUrl}
+            onChange={(e) => setNewExercise({...newExercise, videoUrl: e.target.value})}
+          />
+
+          <div className="flex gap-3 pt-4 border-t border-slate-700/50 mt-4">
+            <Button variant="ghost" type="button" onClick={() => setShowAddModal(false)}>Cancel</Button>
+            <Button variant="primary" type="submit" loading={adding}>Save Exercise</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
