@@ -1,4 +1,4 @@
-const { User, PatientProfile, ExerciseLog, ExerciseSession, DoctorPatientRequest, Exercise, AssignedExercise } = require('../models');
+const { User, PatientProfile, ExerciseLog, ExerciseSession, DoctorPatientRequest, Exercise, AssignedExercise, DietRecommendation } = require('../models');
 
 // @route   GET /api/doctor/all-patients
 // @desc    Get all patients in system (for connection)

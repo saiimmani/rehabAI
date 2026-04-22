@@ -9,6 +9,7 @@ const {
   updateProfessional,
   bookAppointment,
   getProfessionalAppointments,
+  updateAppointmentStatus,
   setOnlineStatus
 } = require('../controllers/professionalsController');
 
@@ -32,6 +33,9 @@ router.post('/:professionalId/appointments', authMiddleware, bookAppointment);
 
 // GET /api/professionals/:professionalId/appointments - Get professional's appointments
 router.get('/:professionalId/appointments', authMiddleware, getProfessionalAppointments);
+
+// PUT /api/professionals/:professionalId/appointments/:appointmentId/status - Accept/decline appointment
+router.put('/:professionalId/appointments/:appointmentId/status', authMiddleware, updateAppointmentStatus);
 
 // PUT /api/professionals/online-status - Set online status
 router.put('/online-status', authMiddleware, setOnlineStatus);

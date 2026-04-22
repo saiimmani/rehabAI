@@ -51,8 +51,8 @@ const professionalSchema = new mongoose.Schema({
     appointmentDate: Date,
     status: {
       type: String,
-      enum: ['scheduled', 'completed', 'cancelled'],
-      default: 'scheduled'
+      enum: ['pending', 'scheduled', 'completed', 'cancelled', 'declined'],
+      default: 'pending'
     },
     notes: String
   }],

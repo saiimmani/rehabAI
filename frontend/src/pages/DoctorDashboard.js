@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Navbar, PageHeader, TabBar } from '../components/Layout';
 import { Card, Button, StatsGrid, EmptyState, Skeleton, Modal, Alert } from '../components/UIComponents';
-import { doctorsAPI, exercisesAPI } from '../services/api';
+import { doctorsAPI, exercisesAPI, professionalsAPI } from '../services/api';
 import { SocketContext } from '../context/SocketContext';
 
 const DoctorDashboard = () => {
@@ -12,6 +12,8 @@ const DoctorDashboard = () => {
   const [activeTab, setActiveTab] = useState('patients');
   const [assignedPatients, setAssignedPatients] = useState([]);
   const [availablePatients, setAvailablePatients] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [professionalId, setProfessionalId] = useState(null);
   const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -46,11 +48,12 @@ const DoctorDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [patientsRes, assignedRes, reportsRes, exercisesRes] = await Promise.all([
+      const [patientsRes, assignedRes, reportsRes, exercisesRes, appointmentsRes] = await Promise.all([
         doctorsAPI.getAllPatients(),
         doctorsAPI.getPatients(),
         doctorsAPI.getReports(),
-        exercisesAPI.getAllExercises()
+        exercisesAPI.getAllExercises(),
+        professionalsAPI.getAppointments('me').catch(() => ({ data: { appointments: [] } }))
       ]);
       
       const assigned = assignedRes.data.patients || [];
@@ -65,10 +68,23 @@ const DoctorDashboard = () => {
       setAvailablePatients(unassignedPatients);
       setReports(reportsRes.data.report);
       setExercises(exercisesRes.data.exercises || []);
+      if (appointmentsRes.data.appointments) {
+        setAppointments(appointmentsRes.data.appointments);
+        setProfessionalId(appointmentsRes.data.professionalId);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
       setLoading(false);
+    }
+  };
+
+  const handleUpdateAppointment = async (appointmentId, status) => {
+    try {
+      await professionalsAPI.updateAppointmentStatus('me', appointmentId, status);
+      fetchData();
+    } catch (error) {
+      alert('Error updating appointment: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -162,6 +178,7 @@ const DoctorDashboard = () => {
   if (loading) return <div className="min-h-screen"><Navbar /><div className="p-6"><Skeleton count={3} /></div></div>;
 
   const tabs = [
+    { id: 'appointments', label: `Appointments (${appointments.filter(a => a.status === 'pending').length})` },
     { id: 'patients', label: `My Patients (${assignedPatients.length})` },
     { id: 'overview', label: 'Overview' }
   ];
@@ -200,6 +217,70 @@ const DoctorDashboard = () => {
 
         <StatsGrid stats={stats} />
         <TabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+
+        {/* Appointments Tab */}
+        {activeTab === 'appointments' && (
+          <div className="space-y-4 animate-fade-in-up">
+            <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2 mb-4">
+              📅 Pending Appointments
+            </h2>
+            {appointments.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {appointments.map((appointment) => (
+                  <Card key={appointment._id} className="relative overflow-hidden group">
+                    <div className="mb-4">
+                      {appointment.patientId ? (
+                        <h3 className="text-lg font-bold text-slate-100">
+                          {appointment.patientId.firstName} {appointment.patientId.lastName}
+                        </h3>
+                      ) : (
+                        <h3 className="text-lg font-bold text-slate-100">Unknown Patient</h3>
+                      )}
+                      <p className="text-sm text-slate-400">
+                        Date: {new Date(appointment.date).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        Status: <span className="capitalize text-indigo-400">{appointment.status}</span>
+                      </p>
+                      {appointment.reason && (
+                        <div className="mt-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700">
+                          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Reason</p>
+                          <p className="text-sm text-slate-300">{appointment.reason}</p>
+                        </div>
+                      )}
+                    </div>
+                    {appointment.status === 'pending' && (
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleUpdateAppointment(appointment._id, 'scheduled')}
+                          className="flex-1 bg-green-600 hover:bg-green-700 border-green-500"
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleUpdateAppointment(appointment._id, 'declined')}
+                          className="flex-1 bg-red-600 hover:bg-red-700 border-red-500 text-white"
+                        >
+                          Decline
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-slate-800/50 rounded-2xl border border-slate-700">
+                <span className="text-4xl mb-4 block">📅</span>
+                <h3 className="text-xl font-bold text-slate-300 mb-2">No Appointments</h3>
+                <p className="text-slate-500">You have no appointment requests at the time.</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* My Patients Tab */}
         {activeTab === 'patients' && (

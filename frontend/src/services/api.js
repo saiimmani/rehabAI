@@ -81,6 +81,27 @@ export const patientsAPI = {
     apiClient.post(`/patients/${patientId}/assign-physiotherapist`, { physiotherapistId }),
 };
 
+// Professionals API
+export const professionalsAPI = {
+  getAllProfessionals: (params) => 
+    apiClient.get('/professionals', { params }),
+    
+  getProfessionalById: (id) => 
+    apiClient.get(`/professionals/${id}`),
+    
+  bookAppointment: (professionalId, data) => 
+    apiClient.post(`/professionals/${professionalId}/appointments`, data),
+    
+  getAppointments: (professionalId) => 
+    apiClient.get(`/professionals/${professionalId}/appointments`),
+    
+  updateAppointmentStatus: (professionalId, appointmentId, data) => 
+    apiClient.put(`/professionals/${professionalId}/appointments/${appointmentId}/status`, data),
+    
+  setOnlineStatus: (online) => 
+    apiClient.put('/professionals/online-status', { online })
+};
+
 // Physiotherapist API
 export const physiotherapistsAPI = {
   getAllPatients: () => 

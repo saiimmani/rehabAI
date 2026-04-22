@@ -161,7 +161,7 @@ exports.bookAppointment = async (req, res) => {
     professional.appointments.push({
       patientId,
       appointmentDate: new Date(appointmentDate),
-      status: 'scheduled',
+      status: 'pending',
       notes
     });
 
@@ -181,17 +181,32 @@ exports.bookAppointment = async (req, res) => {
 // Get professional's appointments
 exports.getProfessionalAppointments = async (req, res) => {
   try {
-    const { professionalId } = req.params;
+    let { professionalId } = req.params;
+    let professional;
 
-    const professional = await Professional.findById(professionalId)
-      .select('appointments')
-      .populate('appointments.patientId', 'firstName lastName');
+    if (professionalId === 'me') {
+      const userId = req.user.id || req.user.userId;
+      professional = await Professional.findOne({ userId })
+        .select('appointments')
+        .populate('appointments.patientId', 'firstName lastName email');
+    } else {
+      professional = await Professional.findById(professionalId)
+        .select('appointments')
+        .populate('appointments.patientId', 'firstName lastName email');
+    }
 
     if (!professional) {
       return res.status(404).json({ success: false, message: 'Professional not found' });
     }
 
-    res.json({ success: true, appointments: professional.appointments });
+    // Sort appointments: pending first, then by date
+    const sorted = professional.appointments.sort((a, b) => {
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      return new Date(a.appointmentDate) - new Date(b.appointmentDate);
+    });
+
+    res.json({ success: true, appointments: sorted, professionalId: professional._id });
   } catch (error) {
     console.error('Error fetching appointments:', error);
     res.status(500).json({ success: false, message: 'Error fetching appointments', error: error.message });
@@ -218,5 +233,47 @@ exports.setOnlineStatus = async (req, res) => {
   } catch (error) {
     console.error('Error updating status:', error);
     res.status(500).json({ success: false, message: 'Error updating status', error: error.message });
+  }
+};
+
+// Update appointment status (accept/decline)
+exports.updateAppointmentStatus = async (req, res) => {
+  try {
+    let { professionalId, appointmentId } = req.params;
+    const { status } = req.body;
+    
+    if (!['scheduled', 'declined', 'cancelled', 'completed'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    let professional;
+    if (professionalId === 'me') {
+      const userId = req.user.id || req.user.userId;
+      professional = await Professional.findOne({ userId });
+    } else {
+      professional = await Professional.findById(professionalId);
+    }
+    
+    if (!professional) {
+      return res.status(404).json({ success: false, message: 'Professional not found' });
+    }
+
+    // Optional: add authorization check to ensure req.user.id matches professional.userId
+    if (professional.userId.toString() !== (req.user.id || req.user.userId) && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const appointment = professional.appointments.id(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    appointment.status = status;
+    await professional.save();
+
+    res.json({ success: true, message: 'Appointment status updated', appointment });
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    res.status(500).json({ success: false, message: 'Error updating appointment status', error: error.message });
   }
 };
