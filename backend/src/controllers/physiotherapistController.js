@@ -5,29 +5,45 @@ const { User, PatientProfile, Exercise, ExerciseSession, ExerciseLog } = require
 // @access  Private (Physiotherapist)
 exports.getAllPatients = async (req, res) => {
   try {
-    const blockedProfiles = await PatientProfile.find({
-      $or: [
-        { assignedDoctor: { $exists: true, $ne: null } },
-        { assignedDoctorId: { $exists: true, $ne: null } },
-        { assignedPhysiotherapist: { $exists: true, $ne: null } }
-      ]
-    })
-      .select('patientId')
-      .lean();
-
-    const blockedPatientIds = new Set(
-      blockedProfiles
-        .filter((profile) => profile.patientId)
-        .map((profile) => profile.patientId.toString())
-    );
-
     const allPatients = await User.find({ role: 'patient' })
       .select('_id firstName lastName email phone age uniqueId')
       .sort({ firstName: 1 })
       .lean();
 
+    if (!allPatients || allPatients.length === 0) {
+      return res.status(200).json({ 
+        message: 'No patients available',
+        patients: [] 
+      });
+    }
+
+    const patientIds = allPatients.map((patient) => patient._id);
+
+    const profiles = await PatientProfile.find({
+      patientId: { $in: patientIds }
+    })
+      .select('patientId assignedDoctor assignedDoctorId assignedPhysiotherapist')
+      .lean();
+
+    const profileByPatientId = new Map(
+      profiles
+        .filter((profile) => profile.patientId)
+        .map((profile) => [profile.patientId.toString(), profile])
+    );
+
     const availablePatients = allPatients.filter(
-      (patient) => !blockedPatientIds.has(patient._id.toString())
+      (patient) => {
+        const profile = profileByPatientId.get(patient._id.toString());
+
+        if (!profile) {
+          return true;
+        }
+
+        const hasDoctorAssignment = Boolean(profile.assignedDoctor || profile.assignedDoctorId);
+        const hasPhysioAssignment = Boolean(profile.assignedPhysiotherapist);
+
+        return !hasDoctorAssignment && !hasPhysioAssignment;
+      }
     );
 
     if (!availablePatients || availablePatients.length === 0) {
