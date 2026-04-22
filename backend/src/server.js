@@ -35,12 +35,22 @@ const getAllowedOrigins = () => {
   ];
 };
 
+const isNetlifyOrigin = (origin) => {
+  if (!origin) return false;
+  try {
+    const { hostname, protocol } = new URL(origin);
+    return protocol === 'https:' && hostname.endsWith('.netlify.app');
+  } catch (error) {
+    return false;
+  }
+};
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (curl, mobile apps, etc.)
     if (!origin) return callback(null, true);
     const allowed = getAllowedOrigins();
-    if (allowed.includes(origin) || allowed.includes('*')) {
+    if (allowed.includes(origin) || allowed.includes('*') || isNetlifyOrigin(origin)) {
       return callback(null, true);
     }
     return callback(new Error(`CORS: origin ${origin} not allowed`), false);
