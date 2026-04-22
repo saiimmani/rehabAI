@@ -57,6 +57,8 @@ function AppRoutes() {
       <Route path="/support"             element={<ProtectedRoute><Support /></ProtectedRoute>} />
       <Route path="/profile"             element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/progress-report"     element={<ProtectedRoute><ProgressReport /></ProtectedRoute>} />
+      <Route path="/mentor/patient/:id/progress" element={<ProtectedRoute><ProgressReport /></ProtectedRoute>} />
+      <Route path="/doctor/patient/:id/progress" element={<ProtectedRoute><ProgressReport /></ProtectedRoute>} />
       <Route path="/messaging"           element={<ProtectedRoute><Messaging /></ProtectedRoute>} />
       <Route path="/doctor-patient-chat" element={<ProtectedRoute><DoctorPatientChat /></ProtectedRoute>} />
       <Route path="/sessions"            element={<ProtectedRoute><SessionScheduling /></ProtectedRoute>} />

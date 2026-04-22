@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Navbar, PageHeader, TabBar } from '../components/Layout';
 import { Card, Button, StatsGrid, EmptyState, Skeleton, Modal, Alert } from '../components/UIComponents';
@@ -6,6 +7,7 @@ import { doctorsAPI, exercisesAPI } from '../services/api';
 import { SocketContext } from '../context/SocketContext';
 
 const DoctorDashboard = () => {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('patients');
   const [assignedPatients, setAssignedPatients] = useState([]);
@@ -270,6 +272,14 @@ const DoctorDashboard = () => {
                         className="flex-1"
                       >
                         + Diet
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate(`/doctor/patient/${patient.patientId?._id}/progress`)}
+                        className="flex-1"
+                      >
+                        Progress →
                       </Button>
                     </div>
                   </Card>

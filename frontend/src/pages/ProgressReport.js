@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { patientsAPI } from '../services/api';
+import React, { useState, useEffect, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { patientsAPI, physiotherapistsAPI, doctorsAPI } from '../services/api';
 import { Navbar } from '../components/Layout';
+import { AuthContext } from '../context/AuthContext';
 
 export default function ProgressReport() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -17,8 +22,21 @@ export default function ProgressReport() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const response = await patientsAPI.getExerciseLogs();
-        const allLogs = response.data.logs || [];
+        let allLogs = [];
+        
+        if (id) {
+          if (user?.role === 'doctor') {
+            const response = await doctorsAPI.getPatientReport(id);
+            allLogs = response.data.logs || [];
+          } else if (user?.role === 'physiotherapist') {
+            const response = await physiotherapistsAPI.getPatientProgress(id);
+            allLogs = response.data.logs || [];
+          }
+        } else {
+          const response = await patientsAPI.getExerciseLogs();
+          allLogs = response.data.logs || [];
+        }
+        
         setLogs(allLogs);
         calculateStats(allLogs);
       } catch (err) {
@@ -28,7 +46,7 @@ export default function ProgressReport() {
       }
     };
     fetchLogs();
-  }, []);
+  }, [id, user]);
 
   const calculateStats = (logsData) => {
     if (!logsData || logsData.length === 0) {
@@ -89,6 +107,17 @@ export default function ProgressReport() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+        
+        {/* Back Button for Professionals */}
+        {id && (
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="mb-6 flex items-center text-slate-300 hover:text-white transition-colors text-sm font-semibold bg-slate-800/50 px-4 py-2 rounded-lg border border-slate-700/50 w-max"
+          >
+            <span className="mr-2">&larr;</span> Back to Dashboard
+          </button>
+        )}
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
             {error}
