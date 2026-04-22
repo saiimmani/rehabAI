@@ -1,31 +1,63 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { physiotherapistsAPI } from '../services/api';
+import { physiotherapistsAPI, exercisesAPI } from '../services/api';
 import { Navbar, PageHeader } from '../components/Layout';
+import { Modal, Button } from '../components/UIComponents';
 
 export default function PhysiotherapistDashboard() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [patients, setPatients] = useState([]);
+  const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  const [showExerciseModal, setShowExerciseModal] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedExerciseId, setSelectedExerciseId] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    const fetchPatients = async () => {
+    const fetchData = async () => {
       try {
-        const response = await physiotherapistsAPI.getPatients();
-        setPatients(response.data.patients || []);
+        const [patientsRes, exercisesRes] = await Promise.all([
+          physiotherapistsAPI.getPatients(),
+          exercisesAPI.getAllExercises()
+        ]);
+        setPatients(patientsRes.data.patients || []);
+        setExercises(exercisesRes.data.exercises || []);
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load patients');
+        setError(err.response?.data?.message || 'Failed to load data');
       } finally {
         setLoading(false);
       }
     };
-    fetchPatients();
+    fetchData();
   }, []);
 
+  const handleAssignExercise = async () => {
+    if (!selectedPatient || !selectedExerciseId) {
+      alert('Please select both patient and exercise');
+      return;
+    }
 
+    setSending(true);
+    try {
+      await physiotherapistsAPI.assignExercise({
+        patientId: selectedPatient.patientId._id,
+        exerciseId: selectedExerciseId
+      });
+      alert('Exercise assigned successfully!');
+      setShowExerciseModal(false);
+      setSelectedExerciseId('');
+      setSelectedPatient(null);
+    } catch (err) {
+      alert('Error: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setSending(false);
+    }
+  };
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -146,10 +178,19 @@ export default function PhysiotherapistDashboard() {
                           "{patient.rehabilitationPlan || 'AI assisted plan pending'}"
                         </p>
                       </td>
-                      <td className="px-8 py-5 text-right">
+                      <td className="px-8 py-5 text-right flex items-center justify-end gap-3">
+                        <button
+                          onClick={() => {
+                            setSelectedPatient(patient);
+                            setShowExerciseModal(true);
+                          }}
+                          className="text-emerald-400 hover:text-emerald-300 font-black text-[10px] uppercase tracking-widest transition-colors flex items-center gap-1 group/btn"
+                        >
+                          <span className="text-sm">+</span> Assign
+                        </button>
                         <button
                           onClick={() => navigate(`/mentor/patient/${patient.patientId._id}/progress`)}
-                          className="text-indigo-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-colors flex items-center justify-end gap-2 group/btn"
+                          className="text-indigo-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-colors flex items-center gap-2 group/btn"
                         >
                           View Progress 
                           <span className="group-hover/btn:translate-x-1 transition-transform">→</span>
@@ -179,6 +220,58 @@ export default function PhysiotherapistDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Assign Exercise Modal */}
+      <Modal
+        isOpen={showExerciseModal}
+        onClose={() => {
+          setShowExerciseModal(false);
+          setSelectedExerciseId('');
+          setSelectedPatient(null);
+        }}
+        title={`Assign Exercise to ${selectedPatient?.patientId?.firstName || 'Patient'}`}
+        size="md"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); handleAssignExercise(); }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Select Exercise</label>
+            <select
+              value={selectedExerciseId}
+              onChange={(e) => setSelectedExerciseId(e.target.value)}
+              className="premium-input px-3 py-2 bg-slate-800"
+              required
+            >
+              <option value="">-- Select exercise --</option>
+              {exercises.map((ex) => (
+                <option key={ex._id} value={ex._id}>
+                  {ex.name} ({ex.difficulty}) - {ex.category}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button 
+              variant="ghost" 
+              type="button"
+              onClick={() => {
+                setShowExerciseModal(false);
+                setSelectedExerciseId('');
+                setSelectedPatient(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="primary" 
+              type="submit"
+              loading={sending}
+            >
+              Assign Exercise
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 

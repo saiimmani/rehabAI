@@ -82,9 +82,23 @@ const ExerciseLibrary = () => {
 
   const renderExerciseCard = (exercise) => (
     <Card key={exercise._id} className="flex flex-col h-full hover:shadow-xl transition-all duration-200">
-      {exercise.imageUrl && (
+      {exercise.videoUrl ? (
+        <div className="mb-4 h-40 rounded-lg overflow-hidden relative">
+          <iframe 
+            src={exercise.videoUrl} 
+            title={exercise.name}
+            className="w-full h-full absolute inset-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowFullScreen
+          ></iframe>
+        </div>
+      ) : exercise.imageUrl ? (
         <div className="mb-4 h-40 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg overflow-hidden">
           <img src={exercise.imageUrl} alt={exercise.name} className="w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div className="mb-4 h-40 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
+          <span className="text-4xl">🏋️‍♂️</span>
         </div>
       )}
       
