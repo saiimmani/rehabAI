@@ -5,7 +5,18 @@ const { User, PatientProfile, Exercise, ExerciseSession, ExerciseLog } = require
 // @access  Private (Physiotherapist)
 exports.getAllPatients = async (req, res) => {
   try {
+    const blockedProfiles = await PatientProfile.find({
+      $or: [
+        { assignedDoctor: { $ne: null } },
+        { assignedDoctorId: { $ne: null } },
+        { assignedPhysiotherapist: { $ne: null } }
+      ]
+    }).select('patientId');
+
+    const blockedPatientIds = blockedProfiles.map((profile) => profile.patientId);
+
     const allPatients = await User.find({ role: 'patient' })
+      .where('_id').nin(blockedPatientIds)
       .select('_id firstName lastName email phone age uniqueId')
       .sort({ firstName: 1 });
 
@@ -56,6 +67,12 @@ exports.assignPatient = async (req, res) => {
         assignedPhysiotherapist: physiotherapistId
       });
     } else {
+      if (patientProfile.assignedDoctor || patientProfile.assignedDoctorId) {
+        return res.status(409).json({
+          message: 'Patient is already assigned to a doctor and cannot be assigned to a physiotherapist'
+        });
+      }
+
       const currentlyAssignedPhysioId = patientProfile.assignedPhysiotherapist
         ? patientProfile.assignedPhysiotherapist.toString()
         : null;
