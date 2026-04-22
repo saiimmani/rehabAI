@@ -17,45 +17,9 @@ exports.getAllPatients = async (req, res) => {
       });
     }
 
-    const patientIds = allPatients.map((patient) => patient._id);
-
-    const profiles = await PatientProfile.find({
-      patientId: { $in: patientIds }
-    })
-      .select('patientId assignedDoctor assignedDoctorId assignedPhysiotherapist')
-      .lean();
-
-    const profileByPatientId = new Map(
-      profiles
-        .filter((profile) => profile.patientId)
-        .map((profile) => [profile.patientId.toString(), profile])
-    );
-
-    const availablePatients = allPatients.filter(
-      (patient) => {
-        const profile = profileByPatientId.get(patient._id.toString());
-
-        if (!profile) {
-          return true;
-        }
-
-        const hasDoctorAssignment = Boolean(profile.assignedDoctor || profile.assignedDoctorId);
-        const hasPhysioAssignment = Boolean(profile.assignedPhysiotherapist);
-
-        return !hasDoctorAssignment && !hasPhysioAssignment;
-      }
-    );
-
-    if (!availablePatients || availablePatients.length === 0) {
-      return res.status(200).json({ 
-        message: 'No patients available',
-        patients: [] 
-      });
-    }
-
     res.status(200).json({ 
-      message: `Found ${availablePatients.length} patient(s)`,
-      patients: availablePatients
+      message: `Found ${allPatients.length} patient(s)`,
+      patients: allPatients
     });
   } catch (error) {
     console.error('Get all patients error:', error);
