@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Navbar, TabBar, PageHeader } from '../components/Layout';
-import { Card, Button, Badge, Skeleton, StatsGrid } from '../components/UIComponents';
+import { Card, Button, Skeleton, StatsGrid } from '../components/UIComponents';
 import apiClient from '../services/apiClient';
 
 const Profile = () => {
@@ -23,50 +23,50 @@ const Profile = () => {
   });
 
   useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get('/patient/profile');
+        const data = response.data;
+        setProfileData(data);
+        setFormData({
+          fullName: data.fullName || '',
+          email: data.email || '',
+          phoneNumber: data.phoneNumber || '',  // backend returns phoneNumber
+          dateOfBirth: data.dateOfBirth || '',
+          address: data.address || ''
+        });
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        // Fallback: use auth context user data
+        if (user) {
+          const fallbackData = {
+            fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            email: user.email || '',
+            phoneNumber: user.phone || user.phoneNumber || '',
+            dateOfBirth: '',
+            address: '',
+            patientId: user.uniqueId || '',
+            medical: {},
+            stats: { totalExercises: 0, daysActive: 0, recoveryProgress: 0, streak: 0 }
+          };
+          setProfileData(fallbackData);
+          setFormData({
+            fullName: fallbackData.fullName,
+            email: fallbackData.email,
+            phoneNumber: fallbackData.phoneNumber,
+            dateOfBirth: '',
+            address: ''
+          });
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchProfileData();
     fetchAchievements();
-  }, []);
-
-  const fetchProfileData = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get('/patient/profile');
-      const data = response.data;
-      setProfileData(data);
-      setFormData({
-        fullName: data.fullName || '',
-        email: data.email || '',
-        phoneNumber: data.phoneNumber || '',  // backend returns phoneNumber
-        dateOfBirth: data.dateOfBirth || '',
-        address: data.address || ''
-      });
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      // Fallback: use auth context user data
-      if (user) {
-        const fallbackData = {
-          fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-          email: user.email || '',
-          phoneNumber: user.phone || user.phoneNumber || '',
-          dateOfBirth: '',
-          address: '',
-          patientId: user.uniqueId || '',
-          medical: {},
-          stats: { totalExercises: 0, daysActive: 0, recoveryProgress: 0, streak: 0 }
-        };
-        setProfileData(fallbackData);
-        setFormData({
-          fullName: fallbackData.fullName,
-          email: fallbackData.email,
-          phoneNumber: fallbackData.phoneNumber,
-          dateOfBirth: '',
-          address: ''
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchAchievements = async () => {
     try {

@@ -11,7 +11,7 @@ const Login = () => {
   const [error, setError]         = useState('');
   const [showPass, setShowPass]   = useState(false);
   const [backendStatus, setBackendStatus] = useState('idle'); // 'idle' | 'waking' | 'ready'
-  const [wakeAttempts, setWakeAttempts]   = useState(0);
+  const [, setWakeAttempts]   = useState(0);
 
   // Ping the backend on mount to detect/warm up cold starts
   useEffect(() => {
