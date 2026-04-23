@@ -41,7 +41,7 @@ exports.createAppointment = async (req, res) => {
       time,
       type,
       notes,
-      status: 'upcoming'
+      status: 'pending'
     });
 
     await appointment.save();
@@ -59,17 +59,33 @@ exports.createAppointment = async (req, res) => {
 exports.updateAppointmentStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const appointment = await Appointment.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const validStatuses = ['pending', 'approved', 'upcoming', 'completed', 'cancelled', 'declined'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+    const appointment = await Appointment.findById(req.params.id);
 
     if (!appointment) {
       return res.status(404).json({ message: 'Appointment not found' });
     }
 
-    res.status(200).json(appointment);
+    // Only the assigned professional can approve/decline
+    const userId = req.user.userId || req.user.id;
+    if (
+      (status === 'approved' || status === 'declined') &&
+      appointment.professional.toString() !== userId.toString()
+    ) {
+      return res.status(403).json({ message: 'Only the assigned professional can approve or decline appointments' });
+    }
+
+    appointment.status = status;
+    await appointment.save();
+
+    const populated = await Appointment.findById(appointment._id)
+      .populate('patient', 'firstName lastName email')
+      .populate('professional', 'firstName lastName email');
+
+    res.status(200).json(populated);
   } catch (error) {
     res.status(500).json({ message: 'Error updating appointment', error: error.message });
   }

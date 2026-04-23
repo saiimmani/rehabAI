@@ -7,20 +7,32 @@ import apiClient from '../services/apiClient';
 const SessionScheduling = () => {
   const { user } = useContext(AuthContext);
   const [sessions, setSessions] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showBooking, setShowBooking] = useState(false);
-  const [bookingForm, setBookingForm] = useState({ date: '', time: '', type: 'Video Call' });
+  const [bookingForm, setBookingForm] = useState({
+    date: '',
+    time: '',
+    type: 'Video Call',
+    professionalId: '',
+    notes: ''
+  });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchSessions();
+    fetchAll();
   }, []);
 
-  const fetchSessions = async () => {
+  const fetchAll = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/sessions');
-      setSessions(response.data);
+      const [sessionsRes, profRes] = await Promise.all([
+        apiClient.get('/sessions'),
+        // Load all users who are doctors or physiotherapists
+        apiClient.get('/auth/professionals').catch(() => ({ data: [] }))
+      ]);
+      setSessions(Array.isArray(sessionsRes.data) ? sessionsRes.data : []);
+      setProfessionals(Array.isArray(profRes.data) ? profRes.data : []);
     } catch (error) {
       console.error('Error fetching sessions:', error);
     } finally {
@@ -28,27 +40,36 @@ const SessionScheduling = () => {
     }
   };
 
+  const fetchSessions = async () => {
+    try {
+      const response = await apiClient.get('/sessions');
+      setSessions(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    }
+  };
+
   const handleBook = async (e) => {
     e.preventDefault();
+    if (!bookingForm.professionalId) {
+      alert('Please select a doctor or physiotherapist.');
+      return;
+    }
     setSubmitting(true);
     try {
-      // For demo purposes, we'll assign to the first professional we find 
-      // or just use a dummy ID if none available. In real scenario, 
-      // the patient would pick a therapist.
-      const profId = user.role === 'patient' ? '60d0fe4f5311236168a109ca' : user.userId;
-      
       const payload = {
-        patientId: user.role === 'patient' ? user.userId : '60d0fe4f5311236168a109ca',
-        professionalId: profId,
+        patientId: user.userId || user.id,
+        professionalId: bookingForm.professionalId,
         date: bookingForm.date,
         time: bookingForm.time,
-        type: bookingForm.type
+        type: bookingForm.type,
+        notes: bookingForm.notes
       };
 
       await apiClient.post('/sessions', payload);
       await fetchSessions();
       setShowBooking(false);
-      setBookingForm({ date: '', time: '', type: 'Video Call' });
+      setBookingForm({ date: '', time: '', type: 'Video Call', professionalId: '', notes: '' });
     } catch (error) {
       alert('Failed to book session. Please try again.');
     } finally {
@@ -66,6 +87,23 @@ const SessionScheduling = () => {
     }
   };
 
+  const getStatusBadge = (status) => {
+    const map = {
+      pending:   { bg: 'bg-amber-500/10',  text: 'text-amber-400',  border: 'border-amber-500/20',  label: 'Pending Approval' },
+      approved:  { bg: 'bg-green-500/10',  text: 'text-green-400',  border: 'border-green-500/20',  label: 'Approved' },
+      upcoming:  { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/20', label: 'Upcoming' },
+      completed: { bg: 'bg-teal-500/10',   text: 'text-teal-400',   border: 'border-teal-500/20',   label: 'Completed' },
+      cancelled: { bg: 'bg-red-500/10',    text: 'text-red-400',    border: 'border-red-500/20',    label: 'Cancelled' },
+      declined:  { bg: 'bg-red-500/10',    text: 'text-red-400',    border: 'border-red-500/20',    label: 'Declined' },
+    };
+    const s = map[status] || map.pending;
+    return (
+      <span className={`px-2 py-1 ${s.bg} ${s.text} border ${s.border} rounded-md text-[9px] font-black uppercase tracking-widest`}>
+        {s.label}
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#0a0a1a]">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
@@ -75,27 +113,52 @@ const SessionScheduling = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <PageHeader 
             title="📅 Session Scheduling"
-            subtitle="Securely manage your upcoming recovery sessions and consultations"
+            subtitle="Book appointments with your assigned doctor or physiotherapist"
           />
-          <Button 
-            variant="primary" 
-            onClick={() => setShowBooking(true)}
-            className="h-12 px-8 font-black shadow-indigo-500/20 shadow-lg"
-          >
-            + New Appointment
-          </Button>
+          {user?.role === 'patient' && (
+            <Button 
+              variant="primary" 
+              onClick={() => setShowBooking(true)}
+              className="h-12 px-8 font-black shadow-indigo-500/20 shadow-lg"
+            >
+              + New Appointment
+            </Button>
+          )}
         </div>
 
         {showBooking && (
           <div className="animate-fade-in-up mb-10">
-            <Card className="glass-panel border-indigo-500/30 bg-indigo-500/5 relative overflow-hidden overflow-visible">
+            <Card className="glass-panel border-indigo-500/30 bg-indigo-500/5 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4">
                 <button onClick={() => setShowBooking(false)} className="text-slate-500 hover:text-white transition-colors text-xl">✕</button>
               </div>
               <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">
                 <span className="text-indigo-400">📝</span> Schedule Appointment
               </h2>
-              <form onSubmit={handleBook} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+              <form onSubmit={handleBook} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
+                {/* Professional Selector */}
+                <div className="space-y-2 md:col-span-2 lg:col-span-1">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                    Doctor / Physiotherapist *
+                  </label>
+                  <select
+                    required
+                    className="premium-input px-4 h-12 bg-slate-900 appearance-none w-full"
+                    value={bookingForm.professionalId}
+                    onChange={(e) => setBookingForm({ ...bookingForm, professionalId: e.target.value })}
+                  >
+                    <option value="">-- Select a professional --</option>
+                    {professionals.map((p) => (
+                      <option key={p._id} value={p._id}>
+                        {p.firstName} {p.lastName} ({p.role})
+                      </option>
+                    ))}
+                    {professionals.length === 0 && (
+                      <option disabled>No professionals found</option>
+                    )}
+                  </select>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Preferred Date</label>
                   <input 
@@ -127,6 +190,16 @@ const SessionScheduling = () => {
                     <option>In-person Clinic</option>
                     <option>Home Visit</option>
                   </select>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Notes (optional)</label>
+                  <input
+                    type="text"
+                    className="premium-input px-4 h-12 w-full"
+                    placeholder="Reason for visit, symptoms, etc."
+                    value={bookingForm.notes}
+                    onChange={(e) => setBookingForm({...bookingForm, notes: e.target.value})}
+                  />
                 </div>
                 <div className="flex gap-3">
                   <Button 
@@ -167,7 +240,9 @@ const SessionScheduling = () => {
                   {sessions.map((session) => (
                     <tr key={session._id} className="group hover:bg-white/5 transition-colors">
                       <td className="px-8 py-5">
-                        <div className="font-black text-slate-100 text-sm">{new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        <div className="font-black text-slate-100 text-sm">
+                          {new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
                         <div className="text-[10px] text-slate-500 font-bold tracking-widest mt-0.5 uppercase">{session.time}</div>
                       </td>
                       <td className="px-8 py-5">
@@ -180,7 +255,7 @@ const SessionScheduling = () => {
                           <div className="font-bold text-slate-200 text-sm">
                             {user?.role === 'patient' 
                               ? `Dr. ${session.professional?.firstName || 'Assigned'} ${session.professional?.lastName || 'Expert'}`
-                              : `${session.patient?.firstName} ${session.patient?.lastName}`}
+                              : `${session.patient?.firstName || ''} ${session.patient?.lastName || ''}`}
                           </div>
                         </div>
                       </td>
@@ -192,19 +267,11 @@ const SessionScheduling = () => {
                       </td>
                       <td className="px-8 py-5">
                         <div className="flex">
-                          {session.status === 'upcoming' && (
-                            <span className="px-2 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-md text-[9px] font-black uppercase tracking-widest">Upcoming</span>
-                          )}
-                          {session.status === 'completed' && (
-                            <span className="px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-md text-[9px] font-black uppercase tracking-widest">Completed</span>
-                          )}
-                          {session.status === 'cancelled' && (
-                            <span className="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-md text-[9px] font-black uppercase tracking-widest">Cancelled</span>
-                          )}
+                          {getStatusBadge(session.status)}
                         </div>
                       </td>
                       <td className="px-8 py-5 text-right">
-                        {session.status === 'upcoming' && (
+                        {(session.status === 'upcoming' || session.status === 'pending' || session.status === 'approved') && user?.role === 'patient' && (
                           <div className="flex gap-3 justify-end items-center">
                             <button 
                               onClick={() => cancelSession(session._id)}
@@ -212,7 +279,7 @@ const SessionScheduling = () => {
                             >
                               Cancel
                             </button>
-                            {session.type === 'Video Call' && (
+                            {session.type === 'Video Call' && session.status === 'approved' && (
                               <button className="h-9 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20">
                                 Join Call
                               </button>

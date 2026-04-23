@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Navbar, PageHeader, TabBar } from '../components/Layout';
 import { Card, Button, StatsGrid, EmptyState, Skeleton, Modal, Alert } from '../components/UIComponents';
-import { physiotherapistsAPI, exercisesAPI, professionalsAPI } from '../services/api';
+import { physiotherapistsAPI, exercisesAPI, sessionsAPI } from '../services/api';
 import { SocketContext } from '../context/SocketContext';
 
 const PhysiotherapistDashboard = () => {
@@ -45,7 +45,7 @@ const PhysiotherapistDashboard = () => {
         physiotherapistsAPI.getPatients(),
         physiotherapistsAPI.getAllPatients(),
         exercisesAPI.getAllExercises(),
-        professionalsAPI.getAppointments('me').catch(() => ({ data: { appointments: [] } }))
+        sessionsAPI.getAllSessions().catch(() => ({ data: [] }))
       ]);
 
       const assigned = patientsRes.data.patients || [];
@@ -58,9 +58,7 @@ const PhysiotherapistDashboard = () => {
       setAssignedPatients(assigned);
       setAvailablePatients(unassignedPatients);
       setExercises(exercisesRes.data.exercises || []);
-      if (appointmentsRes.data.appointments) {
-        setAppointments(appointmentsRes.data.appointments);
-      }
+      setAppointments(appointmentsRes.data || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -70,7 +68,7 @@ const PhysiotherapistDashboard = () => {
 
   const handleUpdateAppointment = async (appointmentId, status) => {
     try {
-      await professionalsAPI.updateAppointmentStatus('me', appointmentId, status);
+      await sessionsAPI.updateAppointmentStatus(appointmentId, status);
       fetchData();
     } catch (error) {
       alert('Error updating appointment: ' + (error.response?.data?.message || error.message));
@@ -181,20 +179,26 @@ const PhysiotherapistDashboard = () => {
         <StatsGrid stats={stats} />
         <TabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-        {/* Appointments Tab */}
         {activeTab === 'appointments' && (
           <div className="space-y-4 animate-fade-in-up">
             <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2 mb-4">
-              📅 Pending Appointments
+              📅 Appointment Requests
             </h2>
             {appointments.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {appointments.map((appointment) => (
+                {appointments
+                  .slice()
+                  .sort((a, b) => {
+                    if (a.status === 'pending' && b.status !== 'pending') return -1;
+                    if (a.status !== 'pending' && b.status === 'pending') return 1;
+                    return new Date(a.date) - new Date(b.date);
+                  })
+                  .map((appointment) => (
                   <Card key={appointment._id} className="relative overflow-hidden group">
                     <div className="mb-4">
-                      {appointment.patientId ? (
+                      {appointment.patient ? (
                         <h3 className="text-lg font-bold text-slate-100">
-                          {appointment.patientId.firstName} {appointment.patientId.lastName}
+                          {appointment.patient.firstName} {appointment.patient.lastName}
                         </h3>
                       ) : (
                         <h3 className="text-lg font-bold text-slate-100">Unknown Patient</h3>
@@ -202,13 +206,24 @@ const PhysiotherapistDashboard = () => {
                       <p className="text-sm text-slate-400">
                         Date: {new Date(appointment.date).toLocaleDateString()}
                       </p>
+                      {appointment.time && (
+                        <p className="text-sm text-slate-400">Time: {appointment.time}</p>
+                      )}
                       <p className="text-sm text-slate-400">
-                        Status: <span className="capitalize text-indigo-400">{appointment.status}</span>
+                        Status: <span className={`capitalize font-semibold ${
+                          appointment.status === 'pending' ? 'text-amber-400' :
+                          appointment.status === 'approved' ? 'text-green-400' :
+                          appointment.status === 'declined' ? 'text-red-400' :
+                          'text-indigo-400'
+                        }`}>{appointment.status}</span>
                       </p>
-                      {appointment.reason && (
+                      {appointment.type && (
+                        <p className="text-sm text-slate-400">Type: {appointment.type}</p>
+                      )}
+                      {appointment.notes && (
                         <div className="mt-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700">
-                          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Reason</p>
-                          <p className="text-sm text-slate-300">{appointment.reason}</p>
+                          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Notes</p>
+                          <p className="text-sm text-slate-300">{appointment.notes}</p>
                         </div>
                       )}
                     </div>
@@ -217,10 +232,10 @@ const PhysiotherapistDashboard = () => {
                         <Button
                           variant="primary"
                           size="sm"
-                          onClick={() => handleUpdateAppointment(appointment._id, 'scheduled')}
+                          onClick={() => handleUpdateAppointment(appointment._id, 'approved')}
                           className="flex-1 bg-green-600 hover:bg-green-700 border-green-500"
                         >
-                          Accept
+                          ✓ Approve
                         </Button>
                         <Button
                           variant="secondary"
@@ -228,7 +243,7 @@ const PhysiotherapistDashboard = () => {
                           onClick={() => handleUpdateAppointment(appointment._id, 'declined')}
                           className="flex-1 bg-red-600 hover:bg-red-700 border-red-500 text-white"
                         >
-                          Decline
+                          ✕ Decline
                         </Button>
                       </div>
                     )}
@@ -239,7 +254,7 @@ const PhysiotherapistDashboard = () => {
               <div className="text-center py-12 bg-slate-800/50 rounded-2xl border border-slate-700">
                 <span className="text-4xl mb-4 block">📅</span>
                 <h3 className="text-xl font-bold text-slate-300 mb-2">No Appointments</h3>
-                <p className="text-slate-500">You have no appointment requests at the time.</p>
+                <p className="text-slate-500">You have no appointment requests at this time.</p>
               </div>
             )}
           </div>

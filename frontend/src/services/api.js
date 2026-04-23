@@ -215,20 +215,23 @@ export const exercisesAPI = {
 
 // Session API
 export const sessionsAPI = {
-  getAllSessions: () => 
+  getAllSessions: () =>
     apiClient.get('/sessions'),
   
-  getSessionById: (id) => 
+  getSessionById: (id) =>
     apiClient.get(`/sessions/${id}`),
   
-  getPatientSessions: (patientId) => 
+  getPatientSessions: (patientId) =>
     apiClient.get(`/sessions/patient/${patientId}`),
   
-  createSession: (sessionData) => 
+  createSession: (sessionData) =>
     apiClient.post('/sessions', sessionData),
   
-  updateSession: (id, data) => 
+  updateSession: (id, data) =>
     apiClient.put(`/sessions/${id}`, data),
+  
+  updateAppointmentStatus: (id, status) =>
+    apiClient.put(`/sessions/${id}/status`, { status }),
 };
 
 // Conversations API (Doctor-Patient Chat)
