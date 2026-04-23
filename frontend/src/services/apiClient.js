@@ -12,7 +12,7 @@ if (API_BASE_URL.startsWith('mongodb')) {
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 60000, // 60s — Render free tier can take 30-60s on cold start
   headers: {
     'Content-Type': 'application/json',
   },

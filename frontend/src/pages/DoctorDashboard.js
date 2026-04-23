@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Navbar, PageHeader, TabBar } from '../components/Layout';
 import { Card, Button, StatsGrid, EmptyState, Skeleton, Modal, Alert } from '../components/UIComponents';
-import { doctorsAPI, exercisesAPI, professionalsAPI } from '../services/api';
+import { doctorsAPI, exercisesAPI, professionalsAPI, sessionsAPI } from '../services/api';
 import { SocketContext } from '../context/SocketContext';
 
 const DoctorDashboard = () => {
@@ -52,7 +52,7 @@ const DoctorDashboard = () => {
         doctorsAPI.getPatients(),
         doctorsAPI.getReports(),
         exercisesAPI.getAllExercises(),
-        professionalsAPI.getAppointments('me').catch(() => ({ data: { appointments: [] } }))
+        sessionsAPI.getAllSessions().catch(() => ({ data: [] }))
       ]);
       
       const assigned = assignedRes.data.patients || [];
@@ -67,9 +67,9 @@ const DoctorDashboard = () => {
       setAvailablePatients(unassignedPatients);
       setReports(reportsRes.data.report);
       setExercises(exercisesRes.data.exercises || []);
-      if (appointmentsRes.data.appointments) {
-        setAppointments(appointmentsRes.data.appointments);
-      }
+      
+      const allSessions = appointmentsRes.data || [];
+      setAppointments(allSessions);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);

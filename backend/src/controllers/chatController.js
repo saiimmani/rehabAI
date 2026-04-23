@@ -134,6 +134,26 @@ function generateAIResponse(userMessage) {
     return `I've escalated your query to your assigned physiotherapist. They've been notified and will review your messages shortly. Is there anything else you'd like to add?`;
   }
 
+  if (message.includes('leg') || message.includes('thigh') || message.includes('hamstring') || message.includes('quad') || message.includes('calf') || message.includes('shin')) {
+    return `Here are effective **leg rehabilitation exercises**:\n\n1. **Quad Sets** — Sitting on floor, tighten quad muscle, hold 5 seconds. 3×15 reps.\n2. **Straight Leg Raises** — Lying flat, raise leg to 45°, hold 2 seconds. 3×12 reps.\n3. **Hamstring Curls** — Standing, curl heel toward glutes slowly. 3×12 reps.\n4. **Calf Raises** — Rise onto toes, lower slowly. 3×20 reps.\n5. **Bridges** — Lying on back, lift hips, squeeze glutes. 3×15 reps.\n6. **Standing Hip Extension** — Hold support, extend leg back slowly. 3×12 reps.\n\n⚠️ Start with low resistance and increase gradually. Stop if you feel sharp pain!`;
+  }
+
+  if (message.includes('hip')) {
+    return `Here are effective **hip rehabilitation exercises**:\n\n1. **Hip Flexor Stretch** — Lunge position, sink hips forward, hold 30 seconds.\n2. **Clamshells** — Side-lying, knees bent, open top knee like clamshell. 3×15 reps.\n3. **Hip Abduction** — Lying on side, raise top leg 30°, hold 2 seconds. 3×12 reps.\n4. **Bridges** — On back, lift hips, squeeze glutes. 3×15 reps.\n5. **Side-Lying Hip Circles** — Small controlled circles. 2 min each direction.\n\n⚠️ Keep movements slow and controlled. Avoid locking joints.`;
+  }
+
+  if (message.includes('ankle') || message.includes('foot') || message.includes('heel')) {
+    return `Here are effective **ankle rehabilitation exercises**:\n\n1. **Alphabet Tracing** — Lift foot, trace alphabet with toes. 2-3 sets.\n2. **Calf Raises** — Rise onto toes slowly, lower. 3×20 reps.\n3. **Ankle Circles** — Full range of motion rotations. 20 each direction.\n4. **Resistance Band Flex/Point** — Band around foot, flex and point. 3×15 reps.\n5. **Single-Leg Balance** — 30 seconds each foot, progress to unstable surface.\n\n⚠️ Start non-weight-bearing exercises first if recently injured.`;
+  }
+
+  if (message.includes('wrist') || message.includes('hand') || message.includes('finger')) {
+    return `**Wrist and hand rehabilitation**:\n\n1. **Wrist Flexion/Extension** — Rest forearm, bend wrist up and down. 3×15.\n2. **Wrist Circles** — Slow full circles, each direction. 20 reps.\n3. **Grip Strengthening** — Squeeze soft ball or putty. 3×15 reps.\n4. **Finger Spreads** — Spread fingers wide, hold 5 seconds. 3×10.\n\n⚠️ Keep movements pain-free. Rest if swelling increases.`;
+  }
+
+  if (message.includes('neck') || message.includes('cervical')) {
+    return `**Neck rehabilitation exercises**:\n\n1. **Chin Tucks** — Gently pull chin straight back. Hold 5 seconds. 3×10.\n2. **Neck Rotations** — Slowly turn head left/right, hold each side 10 seconds.\n3. **Side Bends** — Tilt ear toward shoulder gently. Hold 15 seconds each side.\n4. **Isometric Resistance** — Press hand against head (front, back, sides), no movement. Hold 5 seconds.\n\n⚠️ Never force neck movements. Stop if you feel any tingling or numbness.`;
+  }
+
   if (message.includes('knee')) {
     return `Here are effective knee rehabilitation exercises:\n\n1. **Knee Extensions** — Sit, extend one leg straight, hold 2 seconds. 3×10 reps.\n2. **Wall Squats** — Back flat on wall, slide down to 90°. 3×12 reps.\n3. **Step-ups** — Use a low step, step up/down slowly. 3×10 per leg.\n4. **Straight Leg Raises** — Lying flat, raise one leg to 45°. 3×15 reps.\n5. **Calf Raises** — Rise onto toes, lower slowly. 3×20 reps.\n\n⚠️ Always warm up first. Stop if you feel sharp pain!`;
   }

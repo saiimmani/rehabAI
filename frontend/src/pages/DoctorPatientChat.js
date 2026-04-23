@@ -291,18 +291,39 @@ const DoctorPatientChat = () => {
                         </div>
                         {msgs.map((msg, idx) => {
                           const isMine = msg.senderId === user?._id || msg.senderId?._id === user?._id;
+                          // Determine role label and icon for the contact (the other person)
+                          const contactRoleIcon = selectedContact?.role === 'doctor' ? '👨‍⚕️' : selectedContact?.role === 'physiotherapist' ? '🧑‍🔬' : '🧑';
+                          const contactRoleLabel = selectedContact?.role === 'doctor' ? 'Doctor' : selectedContact?.role === 'physiotherapist' ? 'Physio' : 'Patient';
+                          const myRoleIcon = user?.role === 'doctor' ? '👨‍⚕️' : user?.role === 'physiotherapist' ? '🧑‍🔬' : '🧑';
+                          const myRoleLabel = user?.role === 'doctor' ? 'You (Doctor)' : user?.role === 'physiotherapist' ? 'You (Physio)' : 'You';
                           return (
-                            <div key={msg._id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
-                              <div className={`max-w-[80%] rounded-2xl p-4 shadow-lg relative ${
+                            <div key={msg._id || idx} className={`flex items-end gap-2 ${isMine ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
+                              {/* Contact avatar on left */}
+                              {!isMine && (
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-sm flex-shrink-0 shadow-md" title={contactRoleLabel}>
+                                  {contactRoleIcon}
+                                </div>
+                              )}
+                              <div className={`max-w-[75%] rounded-2xl p-4 shadow-lg relative ${
                                 isMine 
                                   ? 'bg-gradient-to-tr from-indigo-600 to-purple-600 text-white rounded-br-none' 
                                   : 'glass-card bg-slate-800/80 text-slate-200 rounded-bl-none border border-slate-700/50'
                               }`}>
+                                {/* Sender label */}
+                                <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isMine ? 'text-indigo-200 text-right' : 'text-slate-400'}`}>
+                                  {isMine ? myRoleLabel : `${contactRoleIcon} ${contactRoleLabel}`}
+                                </p>
                                 <p className="text-sm leading-relaxed">{msg.message}</p>
                                 <p className={`text-[10px] mt-2 font-medium opacity-60 text-right`}>
                                   {formatTime(msg.timestamp)}
                                 </p>
                               </div>
+                              {/* My avatar on right */}
+                              {isMine && (
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center text-sm flex-shrink-0 shadow-md" title={myRoleLabel}>
+                                  {myRoleIcon}
+                                </div>
+                              )}
                             </div>
                           );
                         })}

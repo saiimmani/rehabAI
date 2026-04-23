@@ -95,8 +95,8 @@ export const professionalsAPI = {
   getAppointments: (professionalId) => 
     apiClient.get(`/professionals/${professionalId}/appointments`),
     
-  updateAppointmentStatus: (professionalId, appointmentId, data) => 
-    apiClient.put(`/professionals/${professionalId}/appointments/${appointmentId}/status`, data),
+  updateAppointmentStatus: (professionalId, appointmentId, status) => 
+    apiClient.put(`/professionals/${professionalId}/appointments/${appointmentId}/status`, { status }),
     
   setOnlineStatus: (online) => 
     apiClient.put('/professionals/online-status', { online })

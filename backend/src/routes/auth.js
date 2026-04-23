@@ -3,6 +3,9 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { authMiddleware } = require('../middleware/auth');
 
+// Health check — used by frontend to detect/warm up cold starts
+router.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
 // Public routes
 router.post('/register', authController.register);
 router.post('/login', authController.login);

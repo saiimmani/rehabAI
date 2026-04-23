@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import apiClient from '../services/apiClient';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,6 +10,41 @@ const Login = () => {
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState('');
   const [showPass, setShowPass]   = useState(false);
+  const [backendStatus, setBackendStatus] = useState('idle'); // 'idle' | 'waking' | 'ready'
+  const [wakeAttempts, setWakeAttempts]   = useState(0);
+
+  // Ping the backend on mount to detect/warm up cold starts
+  useEffect(() => {
+    let cancelled = false;
+    let timer = null;
+
+    const pingBackend = async (attempt = 0) => {
+      if (cancelled) return;
+      try {
+        await apiClient.get('/auth/health', { timeout: 8000 });
+        if (!cancelled) setBackendStatus('ready');
+      } catch {
+        if (!cancelled) {
+          if (attempt === 0) setBackendStatus('waking');
+          setWakeAttempts(a => a + 1);
+          // Retry up to 5 times with increasing delay (Render free tier can take ~30s)
+          if (attempt < 5) {
+            timer = setTimeout(() => pingBackend(attempt + 1), 6000);
+          } else {
+            // Backend may still work, just stop banner after many retries
+            setBackendStatus('idle');
+          }
+        }
+      }
+    };
+
+    pingBackend(0);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,12 +59,18 @@ const Login = () => {
       await login(formData.email, formData.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Invalid email or password.');
+      const msg = err.message || 'Invalid email or password.';
+      // Render cold-start timeout message
+      if (msg.toLowerCase().includes('reach the server') || msg.toLowerCase().includes('timeout') || msg.toLowerCase().includes('network')) {
+        setError('The server is waking up — this can take 30–60 seconds on first load. Please wait a moment and try again.');
+        setBackendStatus('waking');
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -52,6 +94,26 @@ const Login = () => {
           </p>
         </div>
 
+        {/* ── Backend warming notice ── */}
+        {backendStatus === 'waking' && (
+          <div className="mb-4 px-4 py-3 rounded-xl flex items-start gap-3 text-sm animate-fade-in"
+            style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', color: '#fde68a' }}>
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold mb-0.5">Server waking up…</p>
+              <p className="text-xs opacity-80">
+                Our free-tier backend takes 30–60 seconds to start after inactivity.
+                You can try logging in — it will succeed once the server is ready.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ── Card ── */}
         <div className="glass-card p-7">
 
@@ -65,10 +127,10 @@ const Login = () => {
 
           {/* ── Error ── */}
           {error && (
-            <div className="mb-5 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm animate-fade-in"
+            <div className="mb-5 px-4 py-3 rounded-xl flex items-start gap-2.5 text-sm animate-fade-in"
               style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5' }}>
-              <span className="text-base flex-shrink-0">⚠</span>
-              {error}
+              <span className="text-base flex-shrink-0 mt-0.5">⚠</span>
+              <span>{error}</span>
             </div>
           )}
 
@@ -136,7 +198,6 @@ const Login = () => {
               Create one
             </Link>
           </p>
-
 
         </div>
 
