@@ -186,4 +186,4 @@ The frontend will open at `http://localhost:3000`
 - Role-based access control is implemented at the route level
 - if there are any changes or improvements needed please mail
   
-### This was developed and upgraded by Immani Sai. By the reference of Open Source project RehabAI by Dheeraj Konakalla
+### This was developed by Immani Sai, Satya Yanamadala, Konakalla Dheeraj.
